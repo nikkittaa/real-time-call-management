@@ -42,7 +42,7 @@ if (typeof window === 'undefined') {
    */
   async function login(username, password) {
     try {
-      const res = await fetch(`${API_URL}/login`, {
+      const res = await fetch(`${API_URL}/auth/signin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -50,8 +50,8 @@ if (typeof window === 'undefined') {
   
       const data = await res.json();
   
-      if (res.ok && data.access_token) {
-        localStorage.setItem('token', data.access_token);
+      if (res.ok && data.accessToken) {
+        localStorage.setItem('token', data.accessToken);
         document.getElementById('message').innerText = 'Login successful!';
         window.location.href = '/dashboard.html'; // redirect
         return data;
