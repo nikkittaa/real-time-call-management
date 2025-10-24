@@ -2,12 +2,12 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
-import { UserRepository } from './user.repository';
 import { User } from './user.entity';
+import { ClickhouseModule } from '../clickhouse/clickhouse.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User])],
-  providers: [UsersService, UserRepository],
+  imports: [ClickhouseModule],
+  providers: [UsersService],
   controllers: [UsersController],
   exports: [UsersService],
 })

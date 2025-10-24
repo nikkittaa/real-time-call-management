@@ -1,25 +1,32 @@
 import { Injectable } from '@nestjs/common';
-import { UserRepository } from './user.repository';
 import { User } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+import { ClickhouseService } from '../clickhouse/clickhouse.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private userRepository: UserRepository) {}
+  constructor( private clickhouseService: ClickhouseService) {}
 
   async getUserById(id: string): Promise<User> {
-    return this.userRepository.getUserById(id);
+    // return this.userRepository.getUserById(id);
+    return this.clickhouseService.getUserById(id);
   }
   async getAllUsers(): Promise<User[]> {
-    return this.userRepository.getAllUsers();
+   // return this.userRepository.getAllUsers();
+   return this.clickhouseService.getAllUsers();
   }
 
   async getUserByUsername(username: string): Promise<User> {
-    return this.userRepository.getUserByUsername(username);
+   // return this.userRepository.getUserByUsername(username);
+   return this.clickhouseService.getUserByUsername(username);
   }
 
-  async createUser(createUserDto: CreateUserDto): Promise<User> {
-    return this.userRepository.createUser(
+  async createUser(createUserDto: CreateUserDto): Promise<String> {
+    // return this.userRepository.createUser(
+    //   createUserDto.username,
+    //   createUserDto.password,
+    // );
+    return this.clickhouseService.createUser(
       createUserDto.username,
       createUserDto.password,
     );
@@ -29,6 +36,6 @@ export class UsersService {
     username: string,
     password: string,
   ): Promise<boolean> {
-    return this.userRepository.validateUserPassword(username, password);
+    return this.clickhouseService.validateUserPassword(username, password);
   }
 }
