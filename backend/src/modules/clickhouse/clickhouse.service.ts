@@ -7,8 +7,7 @@ export class ClickhouseService implements OnModuleInit {
   private client: ClickHouseClient;
 
   onModuleInit() {
-    this.client = 
-    createClient({
+    this.client = createClient({
       url: 'http://localhost:8123',
       username: 'default',
       password: '1234', // match users.xml
@@ -39,7 +38,7 @@ export class ClickhouseService implements OnModuleInit {
       ALTER TABLE call_logs 
       UPDATE status = '${status}' 
       WHERE call_sid = '${callSid}'`;
-  
+
     await this.client.query({
       query: query,
       format: 'JSONEachRow',
@@ -53,11 +52,10 @@ export class ClickhouseService implements OnModuleInit {
       UPDATE end_time = '${endTimeFormatted}' 
      , duration = ${duration} 
       WHERE call_sid = '${callSid}'`;
-  
+
     await this.client.query({
       query: query,
       format: 'JSONEachRow',
     });
   }
-  
 }

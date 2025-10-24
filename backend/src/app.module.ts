@@ -15,7 +15,7 @@ import { CallsModule } from './modules/calls/calls.module';
       envFilePath: ['.env'],
       isGlobal: true,
     }),
-    
+
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

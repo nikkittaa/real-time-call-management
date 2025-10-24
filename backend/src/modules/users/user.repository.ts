@@ -40,10 +40,7 @@ export class UserRepository {
     return this.repository.find();
   }
 
-  async createUser(
-    username: string,
-    password: string,
-  ): Promise<User> {
+  async createUser(username: string, password: string): Promise<User> {
     const salt = await bcrypt.genSalt();
     const encryptedPassword = await bcrypt.hash(password, salt);
     const user = this.repository.create({

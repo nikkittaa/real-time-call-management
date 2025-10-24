@@ -7,6 +7,6 @@ import { ClickhouseModule } from '../clickhouse/clickhouse.module';
 @Module({
   imports: [ClickhouseModule],
   controllers: [TwilioController],
-  providers: [CallsService, TwilioService]
+  providers: [CallsService, TwilioService],
 })
 export class CallsModule {}

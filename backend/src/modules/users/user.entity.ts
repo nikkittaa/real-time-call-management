@@ -16,7 +16,7 @@ export class User {
 
   @Column()
   password: string;
-  
+
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 
