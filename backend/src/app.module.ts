@@ -5,6 +5,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { ClickhouseService } from './modules/clickhouse/clickhouse.service';
+import { ClickhouseModule } from './modules/clickhouse/clickhouse.module';
+import { CallsModule } from './modules/calls/calls.module';
 
 @Module({
   imports: [
@@ -31,8 +34,10 @@ import { AuthModule } from './modules/auth/auth.module';
     }),
     UsersModule,
     AuthModule,
+    ClickhouseModule,
+    CallsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, ClickhouseService],
 })
 export class AppModule {}

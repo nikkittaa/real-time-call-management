@@ -13,7 +13,6 @@ if (typeof window === 'undefined') {
    */
   async function signup(username, password) {
     try {
-      console.log('Attempting signup with API URL:', API_URL);
       const res = await fetch(`${API_URL}/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -25,7 +24,6 @@ if (typeof window === 'undefined') {
       }
   
       const data = await res.json();
-      console.log('Signup response:', data);
       document.getElementById('message').innerText = data.message || 'Signup successful!';
       return data;
     } catch (err) {
