@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { ClickhouseService } from './modules/clickhouse/clickhouse.service';
 import { ClickhouseModule } from './modules/clickhouse/clickhouse.module';
 import { CallsModule } from './modules/calls/calls.module';
+import { FirebaseModule } from './modules/firebase/firebase.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { CallsModule } from './modules/calls/calls.module';
     AuthModule,
     ClickhouseModule,
     CallsModule,
+    FirebaseModule,
   ],
   controllers: [AppController],
   providers: [AppService, ClickhouseService],

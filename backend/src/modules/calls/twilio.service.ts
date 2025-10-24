@@ -44,17 +44,17 @@ export class TwilioService {
       url: `https://unuxorious-unslacking-charlene.ngrok-free.dev/twilio/voice`,
     });
 
-    await this.clickhouse.insertCallLog({
-      call_sid: call.sid,
-      from_number: from,
-      to_number: to,
-      status: call.status,
-      duration: 0,
-      start_time: formatDateForClickHouse(new Date()),
-      end_time: null,
-      user_id: userId,
-      created_at: formatDateForClickHouse(new Date()),
-    });
+    // await this.clickhouse.insertCallLog({
+    //   call_sid: call.sid,
+    //   from_number: from,
+    //   to_number: to,
+    //   status: call.status,
+    //   duration: 0,
+    //   start_time: formatDateForClickHouse(new Date()),
+    //   end_time: null,
+    //   user_id: userId,
+    //   created_at: formatDateForClickHouse(new Date()),
+    // });
 
     return call;
   }

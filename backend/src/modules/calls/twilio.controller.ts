@@ -7,35 +7,42 @@ import {
   UseGuards,
   Get,
   Res,
+  BadRequestException,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { ClickhouseService } from '../clickhouse/clickhouse.service';
-import { ConfigService } from '@nestjs/config';
 import { TwilioService } from './twilio.service';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from 'src/common/decorators/get-jwt-payload.decorator';
 import { User } from '../users/user.entity';
 import { formatDateForClickHouse } from 'src/utils/formatDatefoClickhouse';
+import { FirebaseService } from '../firebase/firebase.service';
 
 @Controller('twilio')
 export class TwilioController {
   constructor(
     private readonly clickhouseService: ClickhouseService,
     private twilioService: TwilioService,
+    private firebaseService: FirebaseService,
   ) {}
 
   @Post('make')
   @UseGuards(AuthGuard('jwt'))
   async makeCall(@Body('to') to: string, @GetUser() user: User) {
-    const call = await this.twilioService.makeCall(to, user.id);
 
-    return {
-      message: 'Call initiated successfully',
-      sid: call.sid,
-      status: call.status,
-      to,
-      userId: user.id,
-    };
+    try{ 
+      const call = await this.twilioService.makeCall(to, user.id);
+      return {
+        message: 'Call initiated successfully',
+        sid: call.sid,
+        status: call.status,
+        to,
+        userId: user.id,
+      };
+    } catch (error) {
+      throw new BadRequestException('Failed to initiate call: ' + error.message);
+    }
+    
   }
 
   @Post('voice')
@@ -49,10 +56,12 @@ export class TwilioController {
 
   @Post('events')
   async handleEvent(@Body() body: any, @Query('userId') userId?: string) {
-    await this.clickhouseService.updateCallStatus(
-      body.CallSid,
-      body.CallStatus,
-    );
+    await this.firebaseService.write(`calls/${body.CallSid}`, {
+      status: body.CallStatus,
+      from_number: body.From,
+      to_number: body.To,
+      user_id: userId,
+    });
     if (
       body.CallStatus === 'completed' ||
       body.CallStatus === 'failed' ||
@@ -61,11 +70,17 @@ export class TwilioController {
       body.CallStatus === 'canceled'
     ) {
       const fullCall = await this.twilioService.fetchFullCallLog(body.CallSid);
-      await this.clickhouseService.updateCallEndTime(
-        body.CallSid,
-        fullCall.endTime,
-        Number(fullCall.duration) || 0,
-      );
+      await this.clickhouseService.insertCallLog({
+        call_sid: fullCall.sid,
+        from_number: fullCall.from,
+        to_number: fullCall.to,
+        status: fullCall.status,
+        duration: Number(fullCall.duration) || 0,
+        start_time: formatDateForClickHouse(fullCall.startTime),
+        end_time: formatDateForClickHouse(fullCall.endTime),
+        user_id: userId,
+        created_at: formatDateForClickHouse(fullCall.startTime),
+      });
     }
     return 'OK';
   }
