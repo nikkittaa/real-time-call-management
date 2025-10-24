@@ -25,6 +25,10 @@ const serviceAccountClone = JSON.parse(JSON.stringify(serviceAccount));
     await this.db.ref(path).set(data);
   }
 
+  async delete(path: string){
+    await this.db.ref(path).remove();
+  }
+
   listen(path: string, callback: (snapshot: admin.database.DataSnapshot) => void) {
     this.db.ref(path).on('value', callback);
   }

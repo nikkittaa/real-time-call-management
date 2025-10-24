@@ -81,6 +81,8 @@ export class TwilioController {
         user_id: userId,
         created_at: formatDateForClickHouse(fullCall.startTime),
       });
+
+      await this.firebaseService.delete(`calls/${body.CallSid}`);
     }
     return 'OK';
   }
