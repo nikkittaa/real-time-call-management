@@ -4,6 +4,7 @@ import { formatDateForClickHouse } from 'src/utils/formatDatefoClickhouse';
 import * as bcrypt from 'bcrypt';
 import { User } from '../users/user.entity';
 import { CallLog } from 'src/common/interfaces/call-logs.interface';
+import { CreateNotesDto } from '../calls/dto/create-notes.dto';
 
 @Injectable()
 export class ClickhouseService implements OnModuleInit {
@@ -87,6 +88,76 @@ export class ClickhouseService implements OnModuleInit {
 
     const result: CallLog[] = await resultSet.json();
     return {data: result};
+  }
+
+  async getCallNotes(callSid: string, userId: string){
+    const query = `SELECT notes FROM call_logs WHERE call_sid = '${callSid}' AND user_id = '${userId}'`;
+
+    const resultSet = await this.client.query({
+      query: query,
+      format: 'JSONEachRow',
+    });
+
+    const result  = await resultSet.json();
+    return result;
+  }
+
+  async updateCallNotes(createNotesDto: CreateNotesDto){
+    const {id: callSid, user_id, notes} = createNotesDto;
+
+    const checkQuery = `
+    SELECT count() AS count
+    FROM call_logs
+    WHERE call_sid = '${callSid}' AND user_id = '${user_id}'
+  `;
+
+  const checkResult = await this.client.query({
+    query: checkQuery,
+    format: 'JSONEachRow',
+  });
+
+  const [{count}] : {count: number}[] = await checkResult.json();
+
+  if (count === 0) {
+    return { updated: false, message: 'No matching call found' };
+  }
+
+    const query = `ALTER TABLE call_logs UPDATE notes = '${notes}', updated_at = now() WHERE call_sid = '${callSid}' AND user_id = '${user_id}' `;
+
+    const resultSet = await this.client.query({
+      query: query,
+      format: 'JSONEachRow',
+    })
+
+    return { updated: true, message: 'Note updated successfully' };
+  }
+
+  async deleteCallNotes(callSid: string, user_id: string){
+    const checkQuery = `
+    SELECT count() AS count
+    FROM call_logs
+    WHERE call_sid = '${callSid}' AND user_id = '${user_id}'
+  `;
+
+  const checkResult = await this.client.query({
+    query: checkQuery,
+    format: 'JSONEachRow',
+  });
+
+  const [{count}] : {count: number}[] = await checkResult.json();
+
+  if (count === 0) {
+    return { updated: false, message: 'No matching call found' };
+  }
+    const query = `ALTER TABLE call_logs UPDATE notes = '' updated_at = now() WHERE call_sid = '${callSid}' AND user_id = '${user_id}' `;
+
+    const resultSet = await this.client.query({
+      query: query,
+      format: 'JSONEachRow',
+    });
+
+    return { updated: true, message: 'Note deleted successfully' };
+    
   }
 
   async getUserById(userId: string) {

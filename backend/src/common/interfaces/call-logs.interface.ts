@@ -5,7 +5,8 @@ export interface CallLog {
     status: string;
     duration: number;
     start_time: Date; 
-    end_time: Date;   
+    end_time: Date;  
+    notes?: string; 
     user_id?: string;    
     created_at?: Date; 
   }

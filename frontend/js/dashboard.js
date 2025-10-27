@@ -14,14 +14,23 @@ const db = getDatabase(app);
 const API_URL = 'http://localhost:3002/twilio/make'; // backend endpoint
 const callsContainer = document.getElementById("callsContainer");
 
+document.addEventListener('DOMContentLoaded', async () => {
+  const token = localStorage.getItem('token');
+  if(!token){
+    alert('You must be logged in to view the dashboard.');
+    window.location.href = '/';
+    return;
+  }
+
+});
+
+
 
 document.getElementById('makeCallBtn').addEventListener('click', async () => {
   document.getElementById('successMessage').innerText = "";
   document.getElementById('message').innerText = "";
 
   const to = document.getElementById('toNumber').value;
-  const token = localStorage.getItem('token'); // JWT token
-
   if (!to) {
     document.getElementById('message').innerText = 'Please enter a phone number';
     return;

@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   
     let page = 1;
-    const limit = 2; // You can change this as needed
+    const limit =10; // You can change this as needed
   
     async function fetchLogs() {
       try {
