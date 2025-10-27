@@ -3,6 +3,7 @@ import { ClickHouseClient, createClient } from '@clickhouse/client';
 import { formatDateForClickHouse } from 'src/utils/formatDatefoClickhouse';
 import * as bcrypt from 'bcrypt';
 import { User } from '../users/user.entity';
+import { CallLog } from 'src/common/interfaces/call-logs.interface';
 
 @Injectable()
 export class ClickhouseService implements OnModuleInit {
@@ -61,6 +62,30 @@ export class ClickhouseService implements OnModuleInit {
     });
   }
 
+  async getUserCallLogs(userId: string) {
+    const query = `
+      SELECT 
+        call_sid, 
+        from_number, 
+        to_number, 
+        status, 
+        duration, 
+        start_time, 
+        end_time 
+      FROM call_logs 
+      WHERE user_id = '${userId}' 
+      ORDER BY start_time DESC
+    `;
+
+    const resultSet = await this.client.query({
+      query,
+      format: 'JSONEachRow',
+    });
+
+    const result: CallLog[] = await resultSet.json();
+    return result;
+  }
+
   async getUserById(userId: string) {
     const query = `
       SELECT * FROM users WHERE user_id = '${userId}'`;
@@ -101,7 +126,7 @@ export class ClickhouseService implements OnModuleInit {
   }
 
   async createUser(username: string, password: string) {
-    // 1. Check if the username already exists
+
     try{
       const existingUser = await this.client.query({
         query: `SELECT username FROM users WHERE username = '${username}' LIMIT 1`,
@@ -118,7 +143,7 @@ export class ClickhouseService implements OnModuleInit {
       const salt = await bcrypt.genSalt();
     const encryptedPassword = await bcrypt.hash(password, salt);
   
-    // 3. Insert the new user
+
     await this.client.insert({
       table: 'users',
       values: [{username: username, password: encryptedPassword}],

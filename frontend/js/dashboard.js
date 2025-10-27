@@ -3,13 +3,10 @@ import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11
 
 // ✅ Firebase config
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  apiKey: "AIzaSyC-j23T_qQaHtVuVYQ-6F7Vh_fHm-o_rD8",
+  authDomain: "real-time-call-management.firebaseapp.com",
   databaseURL: "https://real-time-call-management-default-rtdb.firebaseio.com/",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID",
+  projectId: "real-time-call-management",
 };
 
 const app = initializeApp(firebaseConfig);
