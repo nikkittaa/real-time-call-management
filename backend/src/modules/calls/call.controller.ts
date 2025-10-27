@@ -1,13 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Sse, UseGuards } from "@nestjs/common";
 import { CallsService } from "./calls.service";
 import { GetUser } from "src/common/decorators/get-jwt-payload.decorator";
 import { User } from "../users/user.entity";
 import { AuthGuard } from "@nestjs/passport";
 import { CreateNotesDto } from "./dto/create-notes.dto";
+import { Observable } from "rxjs";
+import { FirebaseService } from "../firebase/firebase.service";
 
 @Controller('calls')
 export class CallController {
-  constructor(private readonly callService: CallsService) {}
+  constructor(private readonly callService: CallsService, private readonly firebaseService: FirebaseService) {}
 
   @Get('/logs')
   @UseGuards(AuthGuard('jwt'))
@@ -19,6 +21,17 @@ export class CallController {
   @UseGuards(AuthGuard('jwt'))
   async getCallNotes(@GetUser() user : User, @Param('id') id: string){
     return this.callService.getCallNotes(id, user.user_id);
+  }
+
+  @Sse('stream')
+  streamCalls(): Observable<MessageEvent> {
+    return new Observable((subscriber) => {
+      this.firebaseService.listen('calls', (snapshot) => {
+        subscriber.next({
+          data: snapshot.val(),
+        } as MessageEvent);
+      });
+    });
   }
 
   @Patch('/:id/notes')

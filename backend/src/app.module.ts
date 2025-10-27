@@ -9,6 +9,7 @@ import { ClickhouseService } from './modules/clickhouse/clickhouse.service';
 import { ClickhouseModule } from './modules/clickhouse/clickhouse.module';
 import { CallsModule } from './modules/calls/calls.module';
 import { FirebaseModule } from './modules/firebase/firebase.module';
+import { FirebaseService } from './modules/firebase/firebase.service';
 
 @Module({
   imports: [
@@ -23,6 +24,6 @@ import { FirebaseModule } from './modules/firebase/firebase.module';
     FirebaseModule,
   ],
   controllers: [AppController],
-  providers: [AppService, ClickhouseService],
+  providers: [AppService, ClickhouseService, FirebaseService, ConfigService],
 })
 export class AppModule {}
