@@ -62,7 +62,8 @@ export class ClickhouseService implements OnModuleInit {
     });
   }
 
-  async getUserCallLogs(userId: string) {
+  async getUserCallLogs(userId: string, page: number, limit: number) {
+    const offset = (page - 1) * limit;
     const query = `
       SELECT 
         call_sid, 
@@ -75,6 +76,7 @@ export class ClickhouseService implements OnModuleInit {
       FROM call_logs 
       WHERE user_id = '${userId}' 
       ORDER BY start_time DESC
+    LIMIT ${limit} OFFSET ${offset}
     `;
 
     const resultSet = await this.client.query({
@@ -82,8 +84,9 @@ export class ClickhouseService implements OnModuleInit {
       format: 'JSONEachRow',
     });
 
+
     const result: CallLog[] = await resultSet.json();
-    return result;
+    return {data: result};
   }
 
   async getUserById(userId: string) {

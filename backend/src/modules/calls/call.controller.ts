@@ -10,7 +10,7 @@ export class CallController {
 
   @Get('/logs')
   @UseGuards(AuthGuard('jwt'))
-  async getCalls(@GetUser() user : User) {
-    return this.callService.getCalls(user.user_id);
+  async getCalls(@GetUser() user : User, @Query('page') page : number = 1, @Query('limit') limit: number = 2) {
+    return this.callService.getCalls(user.user_id, page, limit);
   }
 }

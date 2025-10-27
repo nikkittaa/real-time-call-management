@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Call Logs</title>
+  <link rel="stylesheet" href="css/call_logs.css">
+</head>
+<body>
+<a href="dashboard.html" class="back-link">← Back to Dashboard</a>
+  <div class="dashboard-container">
+    
+    <h1>Your Call Logs</h1>
+    <div id="callLogsContainer"></div>
+<div class="pagination">
+  <button id="prevPage">Previous</button>
+  <span id="pageInfo"></span>
+  <button id="nextPage">Next</button>
+</div>
+    <table id="callLogsTable">
+      <thead>
+        <tr>
+          <th>Call SID</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Status</th>
+          <th>Duration (s)</th>
+          <th>Start Time</th>
+          <th>End Time</th>
+        </tr>
+      </thead>
+      <tbody id="callLogsBody"></tbody>
+    </table>
+
+   
+  </div>
+
+  <script src="js/call_logs.js"></script>
+</body>
+</html>

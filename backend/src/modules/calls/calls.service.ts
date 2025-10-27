@@ -5,7 +5,7 @@ import { ClickhouseService } from '../clickhouse/clickhouse.service';
 export class CallsService {
   constructor(private readonly clickhouseService: ClickhouseService) {}
 
-  async getCalls(userId: string) {
-    return this.clickhouseService.getUserCallLogs(userId);
+  async getCalls(userId: string, page: number, limit: number) {
+    return this.clickhouseService.getUserCallLogs(userId, page, limit);
   }
 }
