@@ -11,18 +11,13 @@ import { FirebaseService } from "../firebase/firebase.service";
 export class CallController {
   constructor(private readonly callService: CallsService, private readonly firebaseService: FirebaseService) {}
 
-  @Get('/logs')
+  @Get()
   @UseGuards(AuthGuard('jwt'))
   async getCalls(@GetUser() user : User, @Query('page') page : number = 1, @Query('limit') limit: number = 10) {
     return this.callService.getCalls(user.user_id, page, limit);
   }
 
-  @Get('/:id/notes')
-  @UseGuards(AuthGuard('jwt'))
-  async getCallNotes(@GetUser() user : User, @Param('id') id: string){
-    return this.callService.getCallNotes(id, user.user_id);
-  }
-
+  
   @Sse('stream')
   streamCalls(): Observable<MessageEvent> {
     return new Observable((subscriber) => {
@@ -32,6 +27,12 @@ export class CallController {
         } as MessageEvent);
       });
     });
+  }
+
+  @Get('/:callSid/notes')
+  @UseGuards(AuthGuard('jwt'))
+  async getCallNotes(@GetUser() user : User, @Param('callSid') callSid: string){
+    return this.callService.getCallNotes(callSid, user.user_id);
   }
 
   @Patch('/:id/notes')

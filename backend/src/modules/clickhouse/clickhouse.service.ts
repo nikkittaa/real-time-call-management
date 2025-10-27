@@ -73,7 +73,8 @@ export class ClickhouseService implements OnModuleInit {
         status, 
         duration, 
         start_time, 
-        end_time 
+        end_time ,
+        notes
       FROM call_logs 
       WHERE user_id = '${userId}' 
       ORDER BY start_time DESC
@@ -98,8 +99,8 @@ export class ClickhouseService implements OnModuleInit {
       format: 'JSONEachRow',
     });
 
-    const result  = await resultSet.json();
-    return result;
+    const result : {notes: string}[] = await resultSet.json();
+    return result[0];
   }
 
   async updateCallNotes(createNotesDto: CreateNotesDto){
@@ -149,7 +150,7 @@ export class ClickhouseService implements OnModuleInit {
   if (count === 0) {
     return { updated: false, message: 'No matching call found' };
   }
-    const query = `ALTER TABLE call_logs UPDATE notes = '' updated_at = now() WHERE call_sid = '${callSid}' AND user_id = '${user_id}' `;
+    const query = `ALTER TABLE call_logs UPDATE notes = '' , updated_at = now() WHERE call_sid = '${callSid}' AND user_id = '${user_id}' `;
 
     const resultSet = await this.client.query({
       query: query,

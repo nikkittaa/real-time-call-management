@@ -1,5 +1,34 @@
+const token = localStorage.getItem('token');
+async function viewNote(callSid) {
+  const res = await fetch(`http://localhost:3002/calls/${callSid}/notes`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  const data = await res.json();
+  alert(`Notes:\n\n${data.notes || 'No notes available'}`);
+}
+
+async function editNote(callSid) {
+  const newNote = prompt("Enter new note:");
+  if (newNote === null) return;
+
+  await fetch(`http://localhost:3002/calls/${callSid}/notes`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({ notes: newNote }),
+  });
+
+  document.getElementById(`note-${callSid}`).innerText = newNote;
+}
+
+async function deleteNote(callSid) {
+  if (!confirm("Delete this note?")) return;
+
+  await fetch(`http://localhost:3002/calls/${callSid}/notes`, { method: "DELETE", headers: { 'Authorization': `Bearer ${token}` } });
+  document.getElementById(`note-${callSid}`).innerText = "No notes";
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
-    const token = localStorage.getItem('token');
+    
     const tableBody = document.getElementById('callLogsBody');
     const prevBtn = document.getElementById('prevPage');
     const nextBtn = document.getElementById('nextPage');
@@ -11,6 +40,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
   
+
+   
     let page = 1;
     const limit =10; // You can change this as needed
   
@@ -19,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         tableBody.innerHTML = `<tr><td colspan="7">Loading...</td></tr>`;
   
         const response = await fetch(
-          `http://localhost:3002/calls/logs?page=${page}&limit=${limit}`,
+          `http://localhost:3002/calls?page=${page}&limit=${limit}`,
           {
             headers: { 'Authorization': `Bearer ${token}` },
           }
@@ -47,6 +78,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             <td>${log.duration}</td>
             <td>${new Date(log.start_time).toLocaleString()}</td>
             <td>${new Date(log.end_time).toLocaleString()}</td>
+             <td><span id="note-${log.call_sid}">${log.notes || "No notes"}</span></br>
+        <button onclick="viewNote('${log.call_sid}')">View</button>
+        <button onclick="editNote('${log.call_sid}')">Edit</button>
+        <button onclick="deleteNote('${log.call_sid}')">Delete</button></td>
+           
           `;
           tableBody.appendChild(row);
         });
