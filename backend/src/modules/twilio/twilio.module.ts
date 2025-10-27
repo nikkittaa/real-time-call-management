@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
-import { CallsService } from './calls.service';
 import { ClickhouseModule } from '../clickhouse/clickhouse.module';
 import { FirebaseModule } from '../firebase/firebase.module';
-import { CallController } from './call.controller';
+import { TwilioService } from './twilio.service';
+import { TwilioController } from './twilio.controller';
+
 
 @Module({
   imports: [ClickhouseModule, FirebaseModule],
-  controllers: [CallController],
-  providers: [CallsService],
+  controllers: [TwilioController],
+  providers: [TwilioService],
 })
-export class CallsModule {}
+export class TwilioModule {}

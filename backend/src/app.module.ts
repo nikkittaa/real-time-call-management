@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -10,6 +9,7 @@ import { ClickhouseModule } from './modules/clickhouse/clickhouse.module';
 import { CallsModule } from './modules/calls/calls.module';
 import { FirebaseModule } from './modules/firebase/firebase.module';
 import { FirebaseService } from './modules/firebase/firebase.service';
+import { TwilioModule } from './modules/twilio/twilio.module';
 
 @Module({
   imports: [
@@ -22,6 +22,7 @@ import { FirebaseService } from './modules/firebase/firebase.service';
     ClickhouseModule,
     CallsModule,
     FirebaseModule,
+    TwilioModule,
   ],
   controllers: [AppController],
   providers: [AppService, ClickhouseService, FirebaseService, ConfigService],
