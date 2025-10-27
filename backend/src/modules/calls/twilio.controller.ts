@@ -27,15 +27,14 @@ export class TwilioController {
   @Post('make')
   @UseGuards(AuthGuard('jwt'))
   async makeCall(@Body('to') to: string, @GetUser() user: User) {
-
     try{ 
-      const call = await this.twilioService.makeCall(to, user.id);
+      const call = await this.twilioService.makeCall(to, user.user_id);
       return {
         message: 'Call initiated successfully',
         sid: call.sid,
         status: call.status,
         to,
-        userId: user.id,
+        userId: user.user_id,
       };
     } catch (error) {
       throw new BadRequestException('Failed to initiate call: ' + error.message);

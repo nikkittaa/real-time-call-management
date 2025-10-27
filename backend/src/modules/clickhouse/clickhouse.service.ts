@@ -63,7 +63,7 @@ export class ClickhouseService implements OnModuleInit {
 
   async getUserById(userId: string) {
     const query = `
-      SELECT * FROM users WHERE id = '${userId}'`;
+      SELECT * FROM users WHERE user_id = '${userId}'`;
 
     const resultSet = await this.client.query({
       query: query,
