@@ -3,10 +3,11 @@ import { CallsService } from './calls.service';
 import { ClickhouseModule } from '../clickhouse/clickhouse.module';
 import { FirebaseModule } from '../firebase/firebase.module';
 import { CallController } from './call.controller';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [ClickhouseModule, FirebaseModule],
   controllers: [CallController],
-  providers: [CallsService],
+  providers: [CallsService, JwtService],
 })
 export class CallsModule {}

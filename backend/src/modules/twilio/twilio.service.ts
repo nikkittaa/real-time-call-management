@@ -34,7 +34,7 @@ export class TwilioService {
         'answered',
         'completed',
       ],
-     url: `https://unuxorious-unslacking-charlene.ngrok-free.dev/twilio/voice?to=${encodeURIComponent(to)}`,
+     url: `https://unuxorious-unslacking-charlene.ngrok-free.dev/twilio/voice`,
     
     });
 

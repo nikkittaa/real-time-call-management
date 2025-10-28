@@ -6,12 +6,13 @@ import { AuthGuard } from "@nestjs/passport";
 import { CreateNotesDto } from "./dto/create-notes.dto";
 import { Observable } from "rxjs";
 import { FirebaseService } from "../firebase/firebase.service";
-import { CallStatus } from "src/common/enums/call-status.enum";
 import { GetCallLogsDto } from "./dto/get-call-logs.dto";
+import { JwtService } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
 
 @Controller('calls')
 export class CallController {
-  constructor(private readonly callService: CallsService, private readonly firebaseService: FirebaseService) {}
+  constructor(private readonly callService: CallsService, private readonly firebaseService: FirebaseService, private readonly jwtService: JwtService, private readonly configService: ConfigService) {}
 
   @Get()
   @UseGuards(AuthGuard('jwt'))
@@ -21,15 +22,18 @@ export class CallController {
 
   
   @Sse('stream')
-  streamCalls(): Observable<MessageEvent> {
+  streamCalls(@Query('token') token: string): Observable<MessageEvent> {
+    const payload = this.jwtService.verify(token, {secret: this.configService.get('JWT_SECRET')});
+    const userId = payload.user_id;
     return new Observable((subscriber) => {
-      this.firebaseService.listen('calls', (snapshot) => {
+      this.firebaseService.listen(`calls/${userId}`, (snapshot) => {
         subscriber.next({
           data: snapshot.val(),
         } as MessageEvent);
       });
     });
   }
+
 
   @Get('/:callSid/notes')
   @UseGuards(AuthGuard('jwt'))

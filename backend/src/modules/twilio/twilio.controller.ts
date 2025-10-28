@@ -56,11 +56,10 @@ export class TwilioController {
 
   @Post('events')
   async handleEvent(@Body() body: any, @Query('userId') userId?: string) {
-    await this.firebaseService.write(`calls/${body.CallSid}`, {
+    await this.firebaseService.write(`calls/${userId}/${body.CallSid}`, {
       status: body.CallStatus,
       from_number: body.From,
       to_number: body.To,
-      user_id: userId,
     });
     if (
       Object.values(CallStatus).includes(body.CallStatus)
@@ -78,7 +77,7 @@ export class TwilioController {
         created_at: formatDateForClickHouse(fullCall.startTime),
       });
 
-      await this.firebaseService.delete(`calls/${body.CallSid}`);
+      await this.firebaseService.delete(`calls/${userId}/${body.CallSid}`);
     }
     return 'OK';
   }

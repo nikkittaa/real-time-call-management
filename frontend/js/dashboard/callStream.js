@@ -1,3 +1,4 @@
+import { getToken } from './utils.js';
 export function initCallStream() {
     const callsContainer = document.getElementById('callsContainer');
     let eventSource;
@@ -5,7 +6,9 @@ export function initCallStream() {
   
     function connect() {
       if (eventSource) eventSource.close();
-      eventSource = new EventSource('http://localhost:3002/calls/stream');
+      const token = getToken();
+     // eventSource = new EventSource('http://localhost:3002/calls/stream');
+     eventSource = new EventSource(`http://localhost:3002/calls/stream?token=${token}`);
      
       eventSource.onmessage = (event) => {
         try {
