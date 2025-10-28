@@ -24,10 +24,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         `http://localhost:3002/calls?page=${page}&limit=${limit}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      if(res.status !== 200) {
+        alert('Error fetching logs');
+        window.location.href = '/';
+        return;
+      }
       const { data } = await res.json();
       tableBody.innerHTML = '';
 
-      if (!data || data.length === 0) {
+      if (res.status === 200 && data.length === 0) {
         tableBody.innerHTML = `<tr><td colspan="8">No logs found</td></tr>`;
         nextBtn.disabled = true;
         prevBtn.disabled = false;

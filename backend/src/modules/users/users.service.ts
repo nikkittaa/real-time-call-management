@@ -21,7 +21,7 @@ export class UsersService {
    return this.clickhouseService.getUserByUsername(username);
   }
 
-  async createUser(createUserDto: CreateUserDto): Promise<String> {
+  async createUser(createUserDto: CreateUserDto): Promise<{ message: string }> {
     // return this.userRepository.createUser(
     //   createUserDto.username,
     //   createUserDto.password,

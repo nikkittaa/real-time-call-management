@@ -225,7 +225,7 @@ export class ClickhouseService implements OnModuleInit {
       format: 'JSONEachRow',
     });
 
-    return 'OK';
+    return  { message: 'User created successfully' };
     }catch(error){
       throw new ConflictException('Username already exists');
     }
