@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Twilio } from 'twilio';
+import { FirebaseService } from '../firebase/firebase.service';
 
 @Injectable()
 export class TwilioService {
@@ -8,6 +9,7 @@ export class TwilioService {
 
   constructor(
     private configService: ConfigService,
+    private firebaseService: FirebaseService,
   ) {
     this.client = new Twilio(
       this.configService.get<string>('TWILIO_ACCOUNT_SID'),
@@ -26,18 +28,22 @@ export class TwilioService {
     const call = await this.client.calls.create({
       from,
       to,
-      statusCallback: `https://unuxorious-unslacking-charlene.ngrok-free.dev/twilio/events?userId=${userId}`,
-      statusCallbackMethod: 'POST',
+     // statusCallback: `https://unuxorious-unslacking-charlene.ngrok-free.dev/twilio/events`,
+      //statusCallbackMethod: 'POST',
       statusCallbackEvent: [
         'initiated',
         'ringing',
         'answered',
         'completed',
       ],
-     url: `https://unuxorious-unslacking-charlene.ngrok-free.dev/twilio/voice`,
+    //  url: `https://unuxorious-unslacking-charlene.ngrok-free.dev/twilio/voice`,
+    applicationSid: this.configService.get<string>('TWIML_APP_SID'),
     
     });
 
+    await this.firebaseService.write(`calls/${call.sid}`, {
+      user_id: userId,
+    });
 
     return call;
   }

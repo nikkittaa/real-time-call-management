@@ -31,6 +31,10 @@ if (getApps().length === 0) {
     await this.db.ref(path).set(data);
   }
 
+  async read(path: string) {
+    return await this.db.ref(path).once('value');
+  }
+
   async delete(path: string){
     await this.db.ref(path).remove();
   }

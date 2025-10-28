@@ -55,7 +55,10 @@ export class TwilioController {
   }
 
   @Post('events')
-  async handleEvent(@Body() body: any, @Query('userId') userId?: string) {
+  async handleEvent(@Body() body: any) {
+    const  userData = await this.firebaseService.read(`calls/${body.CallSid}`);
+    const userId = userData.val()?.user_id;
+
     await this.firebaseService.write(`calls/${userId}/${body.CallSid}`, {
       status: body.CallStatus,
       from_number: body.From,
@@ -78,6 +81,7 @@ export class TwilioController {
       });
 
       await this.firebaseService.delete(`calls/${userId}/${body.CallSid}`);
+      await this.firebaseService.delete(`calls/${body.CallSid}`);
     }
     return 'OK';
   }
