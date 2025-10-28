@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Sse, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Sse, UnauthorizedException, UseGuards } from "@nestjs/common";
 import { CallsService } from "./calls.service";
 import { GetUser } from "src/common/decorators/get-jwt-payload.decorator";
 import { User } from "../users/user.entity";
@@ -9,6 +9,7 @@ import { FirebaseService } from "../firebase/firebase.service";
 import { GetCallLogsDto } from "./dto/get-call-logs.dto";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
+import { JwtPayload } from "src/common/interfaces/jwt-payload.interface";
 
 @Controller('calls')
 export class CallController {
@@ -23,7 +24,12 @@ export class CallController {
   
   @Sse('stream')
   streamCalls(@Query('token') token: string): Observable<MessageEvent> {
-    const payload = this.jwtService.verify(token, {secret: this.configService.get('JWT_SECRET')});
+    let payload: JwtPayload;
+    try{
+      payload = this.jwtService.verify(token, {secret: this.configService.get('JWT_SECRET')});
+    } catch (err) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
     const userId = payload.user_id;
     return new Observable((subscriber) => {
       this.firebaseService.listen(`calls/${userId}`, (snapshot) => {

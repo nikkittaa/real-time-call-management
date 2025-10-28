@@ -4,18 +4,22 @@ export function initCallStream() {
     let eventSource;
     let reconnectTimeout;
   
-    function connect() {
+    async function  connect() {
       if (eventSource) eventSource.close();
       const token = getToken();
-     // eventSource = new EventSource('http://localhost:3002/calls/stream');
+
+      if(!token){
+        window.location.href = '/';
+        return;
+      }
+   
      eventSource = new EventSource(`http://localhost:3002/calls/stream?token=${token}`);
+     
      
       eventSource.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
           callsContainer.innerHTML = '';
-
-          console.log(data);
   
           if (!data || Object.keys(data).length === 0) {
             callsContainer.innerHTML = '<p>No active calls right now.</p>';
@@ -39,7 +43,7 @@ export function initCallStream() {
       };
   
       eventSource.onerror = (err) => {
-        console.warn('Stream error, reconnecting soon...', err);
+
         callsContainer.innerHTML = '<p>Connection lost. Reconnecting...</p>';
         eventSource.close();
   

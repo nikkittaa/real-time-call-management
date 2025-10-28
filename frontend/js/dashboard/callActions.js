@@ -32,6 +32,11 @@ export function setupMakeCall() {
       if (res.ok) {
         showMessage('successMessage', 'Call initiated successfully!');
       } else {
+        if(res.status === 401){
+          localStorage.removeItem('token');
+          window.location.href = '/';
+          return;
+        }
         showMessage('message', `Error: ${data.message || data.error}`);
       }
     } catch (err) {

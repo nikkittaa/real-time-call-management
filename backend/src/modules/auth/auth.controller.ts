@@ -1,6 +1,7 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dto/sign-in.dto';
+import { JwtPayload } from 'src/common/interfaces/jwt-payload.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -9,5 +10,10 @@ export class AuthController {
   @Post('signin')
   signIn(@Body() signInDto: SignInDto): Promise<{ accessToken: string }> {
     return this.authService.signIn(signInDto);
+  }
+
+  @Get('validate-token')
+  validateToken(@Query('token') token: string): Promise<JwtPayload> {
+    return this.authService.validateToken(token);
   }
 }

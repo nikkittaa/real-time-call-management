@@ -4,12 +4,14 @@ import { UsersService } from '../users/users.service';
 import { User } from '../users/user.entity';
 import { SignInDto } from './dto/sign-in.dto';
 import { JwtPayload } from 'src/common/interfaces/jwt-payload.interface';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
   async validateUser(username: string, password: string): Promise<User | null> {
@@ -21,6 +23,14 @@ export class AuthService {
       return this.usersService.getUserByUsername(username);
     }
     return null;
+  }
+
+  async validateToken(token: string): Promise<JwtPayload> {
+    try {
+      return this.jwtService.verify(token, {secret: this.configService.get('JWT_SECRET')});
+    } catch (err) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
   }
 
   async signIn(signInDto: SignInDto): Promise<{ accessToken: string }> {
