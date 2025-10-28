@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ClickhouseService } from '../clickhouse/clickhouse.service';
 import { CreateNotesDto } from './dto/create-notes.dto';
+import { GetCallLogsDto } from './dto/get-call-logs.dto';
 
 @Injectable()
 export class CallsService {
@@ -20,5 +21,9 @@ export class CallsService {
 
   async deleteCallNotes(callSid: string, user_id: string){
     return this.clickhouseService.deleteCallNotes(callSid, user_id);
+  }
+
+  async getFilteredCalls(userId: string, getCallLogsDto: GetCallLogsDto){
+    return this.clickhouseService.getFilteredCalls(userId, getCallLogsDto);
   }
 }

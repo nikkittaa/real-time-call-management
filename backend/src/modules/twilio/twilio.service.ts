@@ -34,6 +34,7 @@ export class TwilioService {
       statusCallbackEvent: [
         'initiated',
         'ringing',
+        'in-progress',
         'answered',
         'completed',
         'failed',

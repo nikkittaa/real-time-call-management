@@ -15,6 +15,7 @@ import { GetUser } from 'src/common/decorators/get-jwt-payload.decorator';
 import { User } from '../users/user.entity';
 import { formatDateForClickHouse } from 'src/utils/formatDatefoClickhouse';
 import { FirebaseService } from '../firebase/firebase.service';
+import { CallStatus } from 'src/common/enums/call-status.enum';
 
 @Controller('twilio')
 export class TwilioController {
@@ -61,11 +62,7 @@ export class TwilioController {
       user_id: userId,
     });
     if (
-      body.CallStatus === 'completed' ||
-      body.CallStatus === 'failed' ||
-      body.CallStatus === 'busy' ||
-      body.CallStatus === 'no-answer' ||
-      body.CallStatus === 'canceled'
+      Object.values(CallStatus).includes(body.CallStatus)
     ) {
       const fullCall = await this.twilioService.fetchFullCallLog(body.CallSid);
       await this.clickhouseService.insertCallLog({

@@ -6,6 +6,8 @@ import { AuthGuard } from "@nestjs/passport";
 import { CreateNotesDto } from "./dto/create-notes.dto";
 import { Observable } from "rxjs";
 import { FirebaseService } from "../firebase/firebase.service";
+import { CallStatus } from "src/common/enums/call-status.enum";
+import { GetCallLogsDto } from "./dto/get-call-logs.dto";
 
 @Controller('calls')
 export class CallController {
@@ -13,8 +15,8 @@ export class CallController {
 
   @Get()
   @UseGuards(AuthGuard('jwt'))
-  async getCalls(@GetUser() user : User, @Query('page') page : number = 1, @Query('limit') limit: number = 10) {
-    return this.callService.getCalls(user.user_id, page, limit);
+  async getCalls(@GetUser() user : User, @Query() getCallLogsDto: GetCallLogsDto) {
+    return this.callService.getFilteredCalls(user.user_id, getCallLogsDto);
   }
 
   

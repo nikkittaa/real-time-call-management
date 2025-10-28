@@ -5,6 +5,8 @@ import * as bcrypt from 'bcrypt';
 import { User } from '../users/user.entity';
 import { CallLog } from 'src/common/interfaces/call-logs.interface';
 import { CreateNotesDto } from '../calls/dto/create-notes.dto';
+import { GetCallLogsDto } from '../calls/dto/get-call-logs.dto';
+import { CallStatus } from 'src/common/enums/call-status.enum';
 
 @Injectable()
 export class ClickhouseService implements OnModuleInit {
@@ -90,6 +92,59 @@ export class ClickhouseService implements OnModuleInit {
     const result: CallLog[] = await resultSet.json();
     return {data: result};
   }
+
+  async getFilteredCalls(
+    userId: string,
+    getCallLogsDto: GetCallLogsDto
+  ) {
+    const {page, limit, from, to, phone, status} = getCallLogsDto;
+    const offset = (page - 1) * limit;
+    const conditions: string[] = [];
+    conditions.push(`user_id = '${userId}'`);
+  
+    // Handle date range
+    if (from) {
+      // If 'to' is missing, default it to today’s date (in YYYY-MM-DD)
+      const toDate =
+        formatDateForClickHouse(to) || formatDateForClickHouse(new Date());
+        console.log(formatDateForClickHouse(from), toDate);
+  
+      conditions.push(`start_time BETWEEN '${formatDateForClickHouse(from)}' AND '${toDate}'`);
+    }
+  
+    // Phone filter
+    if (phone) {
+      conditions.push(`(from_number = '${phone}' OR to_number = '${phone}')`);
+    }
+  
+    // Status filter
+    if (status) {
+      conditions.push(`status = '${status}'`);
+    }
+  
+    // Combine into WHERE clause
+    const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  
+    const query = `
+      SELECT call_sid, 
+        from_number, 
+        to_number, 
+        status, 
+        duration, 
+        start_time, 
+        end_time ,
+        notes
+      FROM call_logs
+      ${whereClause}
+      ORDER BY start_time DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+
+    const resultSet  = await this.client.query({ query, format: 'JSONEachRow' });
+    const result : CallLog[] = await resultSet.json();
+    return result;
+  }
+  
 
   async getCallNotes(callSid: string, userId: string){
     const query = `SELECT notes FROM call_logs WHERE call_sid = '${callSid}' AND user_id = '${userId}'`;
