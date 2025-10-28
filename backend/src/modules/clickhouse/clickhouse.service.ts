@@ -6,7 +6,6 @@ import { User } from '../users/user.entity';
 import { CallLog } from 'src/common/interfaces/call-logs.interface';
 import { CreateNotesDto } from '../calls/dto/create-notes.dto';
 import { GetCallLogsDto } from '../calls/dto/get-call-logs.dto';
-import { CallStatus } from 'src/common/enums/call-status.enum';
 
 @Injectable()
 export class ClickhouseService implements OnModuleInit {
@@ -107,7 +106,6 @@ export class ClickhouseService implements OnModuleInit {
       // If 'to' is missing, default it to today’s date (in YYYY-MM-DD)
       const toDate =
         formatDateForClickHouse(to) || formatDateForClickHouse(new Date());
-        console.log(formatDateForClickHouse(from), toDate);
   
       conditions.push(`start_time BETWEEN '${formatDateForClickHouse(from)}' AND '${toDate}'`);
     }
@@ -142,7 +140,7 @@ export class ClickhouseService implements OnModuleInit {
 
     const resultSet  = await this.client.query({ query, format: 'JSONEachRow' });
     const result : CallLog[] = await resultSet.json();
-    return result;
+    return {data:result};
   }
   
 

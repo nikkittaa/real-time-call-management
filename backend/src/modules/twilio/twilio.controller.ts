@@ -48,6 +48,7 @@ export class TwilioController {
     res.type('text/xml');
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
+
     <Say voice="alice">Hello, this is a call from our application. Please stay on the line.</Say>
         <Say voice="alice">Thank you for calling. Have a great day!</Say>
 </Response>`);

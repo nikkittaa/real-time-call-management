@@ -1,3 +1,4 @@
+import { Type } from "class-transformer";
 import { IsDate, IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
 import { CallStatus } from "src/common/enums/call-status.enum";
 
@@ -12,10 +13,12 @@ export class GetCallLogsDto {
 
     @IsOptional()
     @IsDate()
+    @Type(() => Date)
     from?: Date;
 
     @IsOptional()
     @IsDate()
+    @Type(() => Date)
     to?: Date;
 
     @IsOptional()

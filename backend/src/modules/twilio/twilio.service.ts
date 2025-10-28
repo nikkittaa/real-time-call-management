@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Twilio } from 'twilio';
-import { ClickhouseService } from '../clickhouse/clickhouse.service';
-import { formatDateForClickHouse } from 'src/utils/formatDatefoClickhouse';
 
 @Injectable()
 export class TwilioService {
@@ -10,7 +8,6 @@ export class TwilioService {
 
   constructor(
     private configService: ConfigService,
-    private clickhouse: ClickhouseService,
   ) {
     this.client = new Twilio(
       this.configService.get<string>('TWILIO_ACCOUNT_SID'),
@@ -34,16 +31,13 @@ export class TwilioService {
       statusCallbackEvent: [
         'initiated',
         'ringing',
-        'in-progress',
         'answered',
         'completed',
-        'failed',
-        'busy',
-        'no-answer',
-        'canceled',
       ],
-      url: `https://unuxorious-unslacking-charlene.ngrok-free.dev/twilio/voice`,
+     url: `https://unuxorious-unslacking-charlene.ngrok-free.dev/twilio/voice?to=${encodeURIComponent(to)}`,
+    
     });
+
 
     return call;
   }

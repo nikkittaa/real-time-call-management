@@ -14,14 +14,42 @@ document.addEventListener('DOMContentLoaded', async () => {
   const nextBtn = document.getElementById('nextPage');
   const pageInfo = document.getElementById('pageInfo');
 
+  const fromDate = document.getElementById('fromDate');
+  const toDate = document.getElementById('toDate');
+  const phone = document.getElementById('phoneNumber');
+  const status = document.getElementById('status');
+  const applyBtn = document.getElementById('applyFilters');
+  const clearBtn = document.getElementById('clearFilters');
+
   let page = 1;
   const limit = 5;
 
   async function fetchLogs() {
     try {
       tableBody.innerHTML = `<tr><td colspan="8">Loading...</td></tr>`;
+
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+
+      if (fromDate.value) {
+        params.append('from', new Date(fromDate.value).toISOString());
+      }
+      if (toDate.value) {
+        params.append('to', new Date(toDate.value).toISOString());
+      }
+
+      if (phone.value) {
+        params.append('phone', phone.value.trim());
+      }
+
+      if (status.value) {
+        params.append('status', status.value);
+      }
+
       const res = await fetch(
-        `http://localhost:3002/calls?page=${page}&limit=${limit}`,
+        `http://localhost:3002/calls?${params.toString()}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -85,6 +113,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   nextBtn.addEventListener('click', () => {
     page++;
+    fetchLogs();
+  });
+
+  applyBtn.addEventListener('click', () => {
+    page = 1;
+    fetchLogs();
+  });
+
+  // Clear filters
+  clearBtn.addEventListener('click', () => {
+    fromDate.value = '';
+    toDate.value = '';
+    phone.value = '';
+    status.value = '';
+    page = 1;
     fetchLogs();
   });
 
