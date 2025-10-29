@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Sse, UnauthorizedException, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Query, Res, Sse, UnauthorizedException, UseGuards } from "@nestjs/common";
 import { CallsService } from "./calls.service";
 import { GetUser } from "src/common/decorators/get-jwt-payload.decorator";
 import { User } from "../users/user.entity";
@@ -10,6 +10,8 @@ import { GetCallLogsDto } from "./dto/get-call-logs.dto";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import { JwtPayload } from "src/common/interfaces/jwt-payload.interface";
+import type { Response } from "express";
+import { ExportCallDto } from "./dto/export-call.dto";
 
 @Controller('calls')
 export class CallController {
@@ -19,6 +21,15 @@ export class CallController {
   @UseGuards(AuthGuard('jwt'))
   async getCalls(@GetUser() user : User, @Query() getCallLogsDto: GetCallLogsDto) {
     return this.callService.getFilteredCalls(user.user_id, getCallLogsDto);
+  }
+
+  @Get('export')
+  @UseGuards(AuthGuard('jwt'))
+  async exportCalls(@GetUser() user : User, @Res() res: Response, @Query() exportCallDto: ExportCallDto) {
+    const csvData = await this.callService.exportCalls(user.user_id, exportCallDto);
+    res.header('Content-Type', 'text/csv');
+    res.header('Content-Disposition', 'attachment; filename=call_logs.csv');
+    res.send(csvData);
   }
 
   

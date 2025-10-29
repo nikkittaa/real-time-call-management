@@ -6,6 +6,7 @@ import { User } from '../users/user.entity';
 import { CallLog } from 'src/common/interfaces/call-logs.interface';
 import { CreateNotesDto } from '../calls/dto/create-notes.dto';
 import { GetCallLogsDto } from '../calls/dto/get-call-logs.dto';
+import { ExportCallDto } from '../calls/dto/export-call.dto';
 
 @Injectable()
 export class ClickhouseService implements OnModuleInit {
@@ -131,7 +132,9 @@ export class ClickhouseService implements OnModuleInit {
         duration, 
         start_time, 
         end_time ,
-        notes
+        notes,
+        recording_sid,
+        recording_url
       FROM call_logs
       ${whereClause}
       ORDER BY start_time DESC
@@ -154,6 +157,52 @@ export class ClickhouseService implements OnModuleInit {
       query,
       format: 'JSONEachRow',
     });
+  }
+
+  async exportCalls(userId: string, exportCallDto: ExportCallDto ){
+    const {from, to, phone, status} = exportCallDto;
+    const conditions: string[] = [];
+    conditions.push(`user_id = '${userId}'`);
+
+    if (from) {
+      // If 'to' is missing, default it to today’s date (in YYYY-MM-DD)
+      const toDate =
+        formatDateForClickHouse(to) || formatDateForClickHouse(new Date());
+  
+      conditions.push(`start_time BETWEEN '${formatDateForClickHouse(from)}' AND '${toDate}'`);
+    }
+    if (phone) {
+      conditions.push(`(from_number = '${phone}' OR to_number = '${phone}')`);
+    }
+
+    if (status) {
+      conditions.push(`status = '${status}'`);
+    }
+
+    const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    const query = `
+      SELECT * FROM call_logs
+      ${whereClause}
+      ORDER BY start_time DESC
+    `;
+
+    const resultSet = await this.client.query({
+      query: query,
+      format: 'JSONEachRow',
+    });
+    
+    const result : CallLog[] = await resultSet.json();
+
+    const csv = [
+      Object.keys(result[0]).join(','), // header
+      ...result.map((row) =>
+        Object.values(row)
+          .map((v) => `"${String(v).replace(/"/g, '""')}"`) // escape quotes
+          .join(',')
+      ),
+    ].join('\n');
+
+    return csv;
   }
   
 

@@ -88,7 +88,7 @@ export class TwilioController {
 
   @Post('recording-events')
   async handleRecordingEvent(@Body() body: any) {
-      console.log('Recording event received:', body);
+      //console.log('Recording event received:', body);
       const { CallSid, RecordingSid, RecordingUrl } = body;
     
       if (!CallSid || !RecordingSid || !RecordingUrl) {

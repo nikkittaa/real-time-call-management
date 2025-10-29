@@ -20,6 +20,40 @@ document.addEventListener('DOMContentLoaded', async () => {
   const status = document.getElementById('status');
   const applyBtn = document.getElementById('applyFilters');
   const clearBtn = document.getElementById('clearFilters');
+  const exportBtn = document.getElementById('exportCalls');
+
+  exportBtn.addEventListener('click', async () => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+
+    if (fromDate.value) {
+      params.append('from', new Date(fromDate.value).toISOString());
+    }
+    if (toDate.value) {
+      params.append('to', new Date(toDate.value).toISOString());
+    }
+    
+
+    if (phone.value) {
+      params.append('phone', phone.value.trim());
+    }
+
+    if (status.value) {
+      params.append('status', status.value);
+    }
+
+    const res = await fetch(`http://localhost:3002/calls/export?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.blob();
+    const url = window.URL.createObjectURL(data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'call_logs.csv';
+    a.click();
+  });
 
   let page = 1;
   const limit = 5;
