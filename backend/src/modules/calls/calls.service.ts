@@ -31,4 +31,8 @@ export class CallsService {
   async exportCalls(userId: string, exportCallDto: ExportCallDto){
     return this.clickhouseService.exportCalls(userId, exportCallDto);
   }
+
+  async getAnalytics(userId: string){
+    return this.clickhouseService.getAnalytics(userId);
+  }
 }

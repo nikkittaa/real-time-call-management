@@ -32,6 +32,12 @@ export class CallController {
     res.send(csvData);
   }
 
+  @Get('analytics')
+@UseGuards(AuthGuard('jwt'))
+async getAnalytics(@GetUser() user: User) {
+  return this.callService.getAnalytics(user.user_id);
+}
+
   
   @Sse('stream')
   streamCalls(@Query('token') token: string): Observable<MessageEvent> {

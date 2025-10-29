@@ -7,18 +7,24 @@ import { CallLog } from 'src/common/interfaces/call-logs.interface';
 import { CreateNotesDto } from '../calls/dto/create-notes.dto';
 import { GetCallLogsDto } from '../calls/dto/get-call-logs.dto';
 import { ExportCallDto } from '../calls/dto/export-call.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ClickhouseService implements OnModuleInit {
   private client: ClickHouseClient;
 
+  constructor(private configService: ConfigService) {
+    this.configService = configService;
+  }
+
   onModuleInit() {
     this.client = createClient({
-      url: 'http://localhost:8123',
-      username: 'default',
-      password: '1234', // match users.xml
-      database: 'call_management',
+      url: this.configService.get('CLICKHOUSE_URLLLL'),
+      username: this.configService.get('CLICKHOUSE_USERNAME'),
+      password: this.configService.get('CLICKHOUSE_PASSWORD'),
+      database: this.configService.get('CLICKHOUSE_DATABASE'),
     });
+  
   }
 
   async insertCallLog(callData: any) {
@@ -204,6 +210,50 @@ export class ClickhouseService implements OnModuleInit {
 
     return csv;
   }
+
+  async getAnalytics(userId: string) {
+    const query = `
+      SELECT
+        COUNT(*) AS total_calls,
+        AVG(duration) AS avg_duration,
+        SUM(status = 'completed') / COUNT(*) * 100 AS success_rate
+      FROM call_logs
+      WHERE user_id = '${userId}'
+    `;
+  
+    const resultSet = await this.client.query({
+      query,
+      query_params: { userId },
+      format: 'JSONEachRow'
+    });
+
+    const totals: {total_calls: number, avg_duration: number, success_rate: number}[] = await resultSet.json();
+  
+    const statusQuery = `
+      SELECT
+        status,
+        COUNT(*) AS count
+      FROM call_logs
+      WHERE user_id = '${userId}'
+      GROUP BY status
+    `;
+  
+    const statusDataSet = await this.client.query({
+      query: statusQuery,
+      query_params: { userId },
+      format: 'JSONEachRow'
+    });
+
+    const statusData = await statusDataSet.json();
+  
+    return {
+      total_calls: totals[0].total_calls,
+      avg_duration: Math.round(totals[0].avg_duration || 0),
+      success_rate: Math.round(totals[0].success_rate || 0),
+      status_distribution: statusData
+    };
+  }
+  
   
 
   async getCallNotes(callSid: string, userId: string){
