@@ -85,4 +85,16 @@ export class TwilioController {
     }
     return 'OK';
   }
+
+  @Post('recording-events')
+  async handleRecordingEvent(@Body() body: any) {
+      console.log('Recording event received:', body);
+      const { CallSid, RecordingSid, RecordingUrl } = body;
+    
+      if (!CallSid || !RecordingSid || !RecordingUrl) {
+        return 'Missing required recording fields';
+      }
+      await this.clickhouseService.updateRecordingInfo(CallSid, RecordingSid, RecordingUrl);
+      return 'OK';
+  }
 }

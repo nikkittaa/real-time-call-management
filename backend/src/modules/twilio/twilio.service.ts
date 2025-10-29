@@ -36,6 +36,9 @@ export class TwilioService {
         'answered',
         'completed',
       ],
+      record: true,
+      recordingStatusCallback: 'https://unuxorious-unslacking-charlene.ngrok-free.dev/twilio/recording-events',
+      recordingStatusCallbackEvent: ['completed'],
     //  url: `https://unuxorious-unslacking-charlene.ngrok-free.dev/twilio/voice`,
     applicationSid: this.configService.get<string>('TWIML_APP_SID'),
     

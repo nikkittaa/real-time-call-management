@@ -142,6 +142,19 @@ export class ClickhouseService implements OnModuleInit {
     const result : CallLog[] = await resultSet.json();
     return {data:result};
   }
+
+  async updateRecordingInfo(callSid: string, recordingSid: string, recordingUrl: string) {
+    const query = `
+      ALTER TABLE call_logs
+      UPDATE recording_sid = '${recordingSid}', recording_url = '${recordingUrl}'
+      WHERE call_sid = '${callSid}'
+    `;
+  
+    await this.client.query({
+      query,
+      format: 'JSONEachRow',
+    });
+  }
   
 
   async getCallNotes(callSid: string, userId: string){
