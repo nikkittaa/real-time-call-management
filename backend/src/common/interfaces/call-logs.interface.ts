@@ -9,4 +9,6 @@ export interface CallLog {
     notes?: string; 
     user_id?: string;    
     created_at?: Date; 
+    recording_sid?: string;
+    recording_url?: string;
   }

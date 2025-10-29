@@ -86,6 +86,9 @@ document.addEventListener('DOMContentLoaded', async () => {
               <button class="delete">Delete</button>
             </div>
           </td>
+          <td>
+          ${log.recording_url ? `<a href="${log.recording_url}" target="_blank">View Recording</a>` : 'No recording'}
+          </td>
         `;
 
         row.querySelector('.view').onclick = () => viewNote(log.call_sid);
