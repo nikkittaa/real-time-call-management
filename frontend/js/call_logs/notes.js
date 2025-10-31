@@ -2,11 +2,11 @@ import { getToken, showDialog } from './utils.js';
 
 export async function viewNote(callSid) {
   const token = getToken();
-  const res = await fetch(`http://localhost:3002/calls/${callSid}/notes`, {
-    headers: { 'Authorization': `Bearer ${token}` },
-  });
-  const data = await res.json();
-  showDialog('View Note', data.notes || 'No notes available', [
+  // const res = await fetch(`http://localhost:3002/calls/${callSid}/notes`, {
+  //   headers: { 'Authorization': `Bearer ${token}` },
+  // });
+  // const data = await res.json();
+  showDialog('View Note', document.getElementById(`note-${callSid}`).innerText || 'No notes available', [
     { label: 'Close' },
   ]);
 }
