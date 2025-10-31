@@ -50,4 +50,15 @@ export class TwilioService {
 
     return call;
   }
+
+  async checkHealth() {
+  try {
+    // Lightweight ping to verify Twilio credentials & connectivity
+    const account = await this.client.api.accounts(this.client.accountSid).fetch();
+    return account && account.sid ? 'ok' : 'error';
+  } catch (error) {
+    console.error('Twilio health check failed:', error.message);
+    return 'error';
+  }
+}
 }

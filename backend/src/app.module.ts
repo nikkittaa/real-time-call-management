@@ -10,6 +10,8 @@ import { CallsModule } from './modules/calls/calls.module';
 import { FirebaseModule } from './modules/firebase/firebase.module';
 import { FirebaseService } from './modules/firebase/firebase.service';
 import { TwilioModule } from './modules/twilio/twilio.module';
+import { HealthController } from './health/health.controller';
+import { TwilioService } from './modules/twilio/twilio.service';
 
 @Module({
   imports: [
@@ -24,7 +26,7 @@ import { TwilioModule } from './modules/twilio/twilio.module';
     FirebaseModule,
     TwilioModule,
   ],
-  controllers: [AppController],
-  providers: [AppService, ClickhouseService, FirebaseService, ConfigService],
+  controllers: [AppController,  HealthController],
+  providers: [AppService, ClickhouseService, FirebaseService, ConfigService, TwilioService],
 })
 export class AppModule {}
