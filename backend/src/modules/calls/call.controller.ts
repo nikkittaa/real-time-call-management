@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Query, Res, Sse, UnauthorizedException, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Query, Res, Sse, StreamableFile, UnauthorizedException, UseGuards } from "@nestjs/common";
 import { CallsService } from "./calls.service";
 import { GetUser } from "src/common/decorators/get-jwt-payload.decorator";
 import { User } from "../users/user.entity";
@@ -12,6 +12,7 @@ import { ConfigService } from "@nestjs/config";
 import { JwtPayload } from "src/common/interfaces/jwt-payload.interface";
 import type { Response } from "express";
 import { ExportCallDto } from "./dto/export-call.dto";
+import { Readable } from "stream";
 
 @Controller('calls')
 export class CallController {
@@ -25,11 +26,22 @@ export class CallController {
 
   @Get('export')
   @UseGuards(AuthGuard('jwt'))
-  async exportCalls(@GetUser() user : User, @Res() res: Response, @Query() exportCallDto: ExportCallDto) {
+  async exportCalls(@GetUser() user : User, @Query() exportCallDto: ExportCallDto) {
     const csvData = await this.callService.exportCalls(user.user_id, exportCallDto);
-    res.header('Content-Type', 'text/csv');
-    res.header('Content-Disposition', 'attachment; filename=call_logs.csv');
-    res.send(csvData);
+
+    const stream = Readable.from([csvData]);
+     
+
+    //this part is for sending file as a stream so that the entire file is not loaded into the memory as one chunk
+     return new StreamableFile(stream, {
+       type: 'text/csv',
+       disposition: 'attachment; filename="call_logs.csv"',
+     });
+
+     //this part was for sending the entire file as a response
+    // res.header('Content-Type', 'text/csv');
+    // res.header('Content-Disposition', 'attachment; filename=call_logs.csv');
+    // res.send(csvData);
   }
 
   @Get('analytics')
