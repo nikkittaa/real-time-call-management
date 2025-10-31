@@ -28,20 +28,12 @@ export class TwilioService {
     const call = await this.client.calls.create({
       from,
       to,
-     // statusCallback: `https://unuxorious-unslacking-charlene.ngrok-free.dev/twilio/events`,
-      //statusCallbackMethod: 'POST',
-      statusCallbackEvent: [
-        'initiated',
-        'ringing',
-        'answered',
-        'completed',
-      ],
+      statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
       record: true,
-      recordingStatusCallback: 'https://unuxorious-unslacking-charlene.ngrok-free.dev/twilio/recording-events',
+      recordingStatusCallback: `${this.configService.get<string>('PUBLIC_URL')}/twilio/recording-events`,
       recordingStatusCallbackEvent: ['completed'],
-    //  url: `https://unuxorious-unslacking-charlene.ngrok-free.dev/twilio/voice`,
-    applicationSid: this.configService.get<string>('TWIML_APP_SID'),
-    
+
+      applicationSid: this.configService.get<string>('TWIML_APP_SID'),
     });
 
     await this.firebaseService.write(`calls/${call.sid}`, {
@@ -52,13 +44,15 @@ export class TwilioService {
   }
 
   async checkHealth() {
-  try {
-    // Lightweight ping to verify Twilio credentials & connectivity
-    const account = await this.client.api.accounts(this.client.accountSid).fetch();
-    return account && account.sid ? 'ok' : 'error';
-  } catch (error) {
-    console.error('Twilio health check failed:', error.message);
-    return 'error';
+    try {
+      // Lightweight ping to verify Twilio credentials & connectivity
+      const account = await this.client.api
+        .accounts(this.client.accountSid)
+        .fetch();
+      return account && account.sid ? 'ok' : 'error';
+    } catch (error) {
+      console.error('Twilio health check failed:', error.message);
+      return 'error';
+    }
   }
-}
 }

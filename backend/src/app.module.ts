@@ -26,7 +26,13 @@ import { TwilioService } from './modules/twilio/twilio.service';
     FirebaseModule,
     TwilioModule,
   ],
-  controllers: [AppController,  HealthController],
-  providers: [AppService, ClickhouseService, FirebaseService, ConfigService, TwilioService],
+  controllers: [AppController, HealthController],
+  providers: [
+    AppService,
+    ClickhouseService,
+    FirebaseService,
+    ConfigService,
+    TwilioService,
+  ],
 })
 export class AppModule {}

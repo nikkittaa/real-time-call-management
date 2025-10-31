@@ -27,7 +27,7 @@ export class TwilioController {
   @Post('make')
   @UseGuards(AuthGuard('jwt'))
   async makeCall(@Body('to') to: string, @GetUser() user: User) {
-    try{ 
+    try {
       const call = await this.twilioService.makeCall(to, user.user_id);
       return {
         message: 'Call initiated successfully',
@@ -37,9 +37,10 @@ export class TwilioController {
         userId: user.user_id,
       };
     } catch (error) {
-      throw new BadRequestException('Failed to initiate call: ' + error.message);
+      throw new BadRequestException(
+        'Failed to initiate call: ' + error.message,
+      );
     }
-    
   }
 
   @Post('voice')
@@ -55,7 +56,7 @@ export class TwilioController {
 
   @Post('events')
   async handleEvent(@Body() body: any) {
-    const  userData = await this.firebaseService.read(`calls/${body.CallSid}`);
+    const userData = await this.firebaseService.read(`calls/${body.CallSid}`);
     const userId = userData.val()?.user_id;
 
     await this.firebaseService.write(`calls/${userId}/${body.CallSid}`, {
@@ -63,9 +64,7 @@ export class TwilioController {
       from_number: body.From,
       to_number: body.To,
     });
-    if (
-      Object.values(CallStatus).includes(body.CallStatus)
-    ) {
+    if (Object.values(CallStatus).includes(body.CallStatus)) {
       const fullCall = await this.twilioService.fetchFullCallLog(body.CallSid);
       await this.clickhouseService.insertCallLog({
         call_sid: fullCall.sid,
@@ -88,13 +87,17 @@ export class TwilioController {
 
   @Post('recording-events')
   async handleRecordingEvent(@Body() body: any) {
-      //console.log('Recording event received:', body);
-      const { CallSid, RecordingSid, RecordingUrl } = body;
-    
-      if (!CallSid || !RecordingSid || !RecordingUrl) {
-        return 'Missing required recording fields';
-      }
-      await this.clickhouseService.updateRecordingInfo(CallSid, RecordingSid, RecordingUrl);
-      return 'OK';
+    //console.log('Recording event received:', body);
+    const { CallSid, RecordingSid, RecordingUrl } = body;
+
+    if (!CallSid || !RecordingSid || !RecordingUrl) {
+      return 'Missing required recording fields';
+    }
+    await this.clickhouseService.updateRecordingInfo(
+      CallSid,
+      RecordingSid,
+      RecordingUrl,
+    );
+    return 'OK';
   }
 }

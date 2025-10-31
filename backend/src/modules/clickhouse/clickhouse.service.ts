@@ -24,7 +24,6 @@ export class ClickhouseService implements OnModuleInit {
       password: this.configService.get('CLICKHOUSE_PASSWORD'),
       database: this.configService.get('CLICKHOUSE_DATABASE'),
     });
-  
   }
 
   async insertCallLog(callData: any) {
@@ -35,7 +34,7 @@ export class ClickhouseService implements OnModuleInit {
     });
   }
 
-  async getCallLog(callSid: string){
+  async getCallLog(callSid: string) {
     const query = `
     SELECT call_sid, 
       argMax(from_number, updated_at) as from_number, 
@@ -54,15 +53,14 @@ export class ClickhouseService implements OnModuleInit {
     GROUP BY call_sid
   `;
 
-  const resultSet = await this.client.query({
-    query,
-    format: 'JSONEachRow',
-  });
+    const resultSet = await this.client.query({
+      query,
+      format: 'JSONEachRow',
+    });
 
-  const result : CallLog[] = await resultSet.json();
-  return result[0];
+    const result: CallLog[] = await resultSet.json();
+    return result[0];
   }
-
 
   async getUserCallLogs(userId: string, page: number, limit: number) {
     const offset = (page - 1) * limit;
@@ -90,9 +88,8 @@ export class ClickhouseService implements OnModuleInit {
       format: 'JSONEachRow',
     });
 
-
     const result: CallLog[] = await resultSet.json();
-    return {data: result};
+    return { data: result };
   }
 
   // async getFilteredCalls(
@@ -103,33 +100,33 @@ export class ClickhouseService implements OnModuleInit {
   //   const offset = (page - 1) * limit;
   //   const conditions: string[] = [];
   //   conditions.push(`user_id = '${userId}'`);
-  
+
   //   // Handle date range
   //   if (from) {
   //     // If 'to' is missing, default it to today’s date (in YYYY-MM-DD)
   //     const toDate =
   //       formatDateForClickHouse(to) || formatDateForClickHouse(new Date());
-  
+
   //     conditions.push(`start_time BETWEEN '${formatDateForClickHouse(from)}' AND '${toDate}'`);
   //   }
-  
+
   //   // Phone filter
   //   if (phone) {
   //     conditions.push(`(from_number = '${phone}' OR to_number = '${phone}')`);
   //   }
-  
+
   //   // Status filter
   //   if (status) {
   //     conditions.push(`status = '${status}'`);
   //   }
-  
+
   //   // Combine into WHERE clause
   //   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
-  
+
   //   const query = `
-  //     SELECT call_sid, 
-  //       argMax(from_number, updated_at) as from_number, 
-  //       argMax(to_number, updated_at) as to_number, 
+  //     SELECT call_sid,
+  //       argMax(from_number, updated_at) as from_number,
+  //       argMax(to_number, updated_at) as to_number,
   //       argMax(status,  updated_at) as status,
   //       argMax(duration, updated_at) as duration,
   //       argMax(start_time, updated_at) as start_time,
@@ -141,7 +138,7 @@ export class ClickhouseService implements OnModuleInit {
   //     ${whereClause}
   //     GROUP BY call_sid
   //     ORDER BY argMax(start_time, updated_at) as start_time DESC
-      
+
   //     LIMIT ${limit} OFFSET ${offset}
   //   `;
 
@@ -150,37 +147,36 @@ export class ClickhouseService implements OnModuleInit {
   //   return {data:result};
   // }
 
-  async getFilteredCalls(
-    userId: string,
-    getCallLogsDto: GetCallLogsDto
-  ) {
+  async getFilteredCalls(userId: string, getCallLogsDto: GetCallLogsDto) {
     const { page, limit, from, to, phone, status } = getCallLogsDto;
     const offset = (page - 1) * limit;
     const conditions: string[] = [];
-  
+
     conditions.push(`argMax(user_id, updated_at) = '${userId}'`);
-  
+
     // Handle date range
     if (from) {
       const toDate =
         formatDateForClickHouse(to) || formatDateForClickHouse(new Date());
       conditions.push(
-        `start_time BETWEEN '${formatDateForClickHouse(from)}' AND '${toDate}'`
+        `start_time BETWEEN '${formatDateForClickHouse(from)}' AND '${toDate}'`,
       );
     }
-  
+
     // Phone filter
     if (phone) {
       conditions.push(`from_number = '${phone}' OR to_number = '${phone}'`);
     }
-  
+
     // Status filter
     if (status) {
       conditions.push(`status = '${status}'`);
     }
-  
-    const whereClause = conditions.length ? ` HAVING ${conditions.join(' AND ')}` : '';
-  
+
+    const whereClause = conditions.length
+      ? ` HAVING ${conditions.join(' AND ')}`
+      : '';
+
     const query = `
       SELECT 
         call_sid, 
@@ -199,61 +195,55 @@ export class ClickhouseService implements OnModuleInit {
       ORDER BY argMax(start_time, updated_at) as start_time DESC
       LIMIT ${limit} OFFSET ${offset}
     `;
-  
-  //  console.log(query);
+
+    //  console.log(query);
     const resultSet = await this.client.query({ query, format: 'JSONEachRow' });
     const result: CallLog[] = await resultSet.json();
-  
+
     return { data: result };
   }
-  
 
-  async updateRecordingInfo(callSid: string, recordingSid: string, recordingUrl: string) {
+  async updateRecordingInfo(
+    callSid: string,
+    recordingSid: string,
+    recordingUrl: string,
+  ) {
     //console.log("updating recording");
     const callData = await this.getCallLog(callSid);
     callData.recording_sid = recordingSid;
     callData.recording_url = recordingUrl;
     callData.updated_at = formatDateForClickHouse(new Date());
     await this.insertCallLog(callData);
-   //console.log("recording updated");
-    // const query = `
-    //   ALTER TABLE call_logs
-    //   UPDATE recording_sid = '${recordingSid}', recording_url = '${recordingUrl}', updated_at = now()
-    //   WHERE call_sid = '${callSid}'
-    // `;
-  
-    // await this.client.query({
-    //   query,
-    //   format: 'JSONEachRow',
-    // });
   }
 
-  async exportCalls(userId: string, exportCallDto: ExportCallDto ){
-    const {from, to, phone, status} = exportCallDto;
+  async exportCalls(userId: string, exportCallDto: ExportCallDto) {
+    const { from, to, phone, status } = exportCallDto;
     const conditions: string[] = [];
     conditions.push(`argMax(user_id, updated_at) = '${userId}'`);
-  
+
     // Handle date range
     if (from) {
       const toDate =
         formatDateForClickHouse(to) || formatDateForClickHouse(new Date());
       conditions.push(
-        `start_time BETWEEN '${formatDateForClickHouse(from)}' AND '${toDate}'`
+        `start_time BETWEEN '${formatDateForClickHouse(from)}' AND '${toDate}'`,
       );
     }
-  
+
     // Phone filter
     if (phone) {
       conditions.push(`from_number = '${phone}' OR to_number = '${phone}'`);
     }
-  
+
     // Status filter
     if (status) {
       conditions.push(`status = '${status}'`);
     }
-  
-    const whereClause = conditions.length ? ` HAVING ${conditions.join(' AND ')}` : '';
-  
+
+    const whereClause = conditions.length
+      ? ` HAVING ${conditions.join(' AND ')}`
+      : '';
+
     const query = `
       SELECT 
         call_sid, 
@@ -271,70 +261,25 @@ export class ClickhouseService implements OnModuleInit {
       ${whereClause}
       ORDER BY argMax(start_time, updated_at) as start_time DESC
     `;
-  
 
     const resultSet = await this.client.query({
       query: query,
       format: 'JSONEachRow',
     });
-    
-    const result : CallLog[] = await resultSet.json();
+
+    const result: CallLog[] = await resultSet.json();
 
     const csv = [
       Object.keys(result[0]).join(','), // header
       ...result.map((row) =>
         Object.values(row)
           .map((v) => `"${String(v).replace(/"/g, '""')}"`) // escape quotes
-          .join(',')
+          .join(','),
       ),
     ].join('\n');
 
     return csv;
   }
-
-  // async getAnalytics(userId: string) {
-  //   const query = `
-  //     SELECT
-  //       COUNT( call_sid) AS total_calls,
-  //       AVG(argMax(duration, updated_at)) AS avg_duration,
-  //       SUM(argMax(status, updated_at) = 'completed') / COUNT(distinct call_sid) * 100 AS success_rate
-  //     FROM call_logs
-  //     GROUP BY call_sid
-  //     HAVING user_id = '${userId}'
-  //   `;
-  
-  //   const resultSet = await this.client.query({
-  //     query,
-  //     query_params: { userId },
-  //     format: 'JSONEachRow'
-  //   });
-
-  //   const totals: {total_calls: number, avg_duration: number, success_rate: number}[] = await resultSet.json();
-  
-  //   const statusQuery = `
-  //     SELECT
-  //       argMax(status, updated_at) as status,
-  //       COUNT(argMax(call_sid, updated_at)) AS count
-  //     FROM call_logs
-  //     GROUP BY argMax(status, updated_at) as status
-  //     HAVING user_id = '${userId}'
-  //   `;
-  
-  //   const statusDataSet = await this.client.query({
-  //     query: statusQuery,
-  //     query_params: { userId },
-  //     format: 'JSONEachRow'
-  //   });
-
-  //   const statusData = await statusDataSet.json();
-  
-  //   return {
-  //     total_calls: totals[0].total_calls,
-  //     avg_duration: Math.round(totals[0].avg_duration || 0),
-  //     success_rate: Math.round(totals[0].success_rate || 0),
-  //     status_distribution: statusData
-  //   };
-  // }
 
   async getAnalytics(userId: string) {
     // Subquery: get the "latest" values per call_sid
@@ -344,10 +289,10 @@ export class ClickhouseService implements OnModuleInit {
         argMax(duration, updated_at) AS duration,
         argMax(status, updated_at) AS status
       FROM call_logs
-      WHERE user_id = {userId:String}
+      WHERE user_id = '${userId}'
       GROUP BY call_sid
     `;
-  
+
     // Totals: total calls, avg duration, success rate
     const totalsQuery = `
       SELECT
@@ -356,16 +301,19 @@ export class ClickhouseService implements OnModuleInit {
         SUM(status = 'completed') / COUNT(*) * 100 AS success_rate
       FROM (${baseSubquery}) AS t
     `;
-  
+
     const totalsResultSet = await this.client.query({
       query: totalsQuery,
-      query_params: { userId },
       format: 'JSONEachRow',
     });
-  
+
     const totalsArray = await totalsResultSet.json();
-    const totals = totalsArray as { total_calls: number, avg_duration: number, success_rate: number }[];
-  
+    const totals = totalsArray as {
+      total_calls: number;
+      avg_duration: number;
+      success_rate: number;
+    }[];
+
     // Status distribution
     const statusQuery = `
       SELECT
@@ -375,15 +323,14 @@ export class ClickhouseService implements OnModuleInit {
       GROUP BY status
       ORDER BY count DESC
     `;
-  
+
     const statusResultSet = await this.client.query({
       query: statusQuery,
-      query_params: { userId },
       format: 'JSONEachRow',
     });
-  
+
     const statusData = await statusResultSet.json();
-  
+
     return {
       total_calls: Number(totals[0].total_calls || 0),
       avg_duration: Math.round(Number(totals[0].avg_duration || 0)),
@@ -391,11 +338,8 @@ export class ClickhouseService implements OnModuleInit {
       status_distribution: statusData, // [{ status: 'completed', count: 123 }, ...]
     };
   }
-  
-  
-  
 
-  async getCallNotes(callSid: string, userId: string){
+  async getCallNotes(callSid: string, userId: string) {
     const query = `SELECT 
   argMax(notes, updated_at) AS notes
 FROM call_logs
@@ -408,59 +352,28 @@ GROUP BY call_sid`;
       format: 'JSONEachRow',
     });
 
-    const result : {notes: string}[] = await resultSet.json();
+    const result: { notes: string }[] = await resultSet.json();
     return result[0];
   }
 
-  async updateCallNotes(createNotesDto: CreateNotesDto){
-    const {id: callSid, user_id, notes} = createNotesDto;
+  async updateCallNotes(createNotesDto: CreateNotesDto) {
+    const { id: callSid, user_id, notes } = createNotesDto;
 
     const callData = await this.getCallLog(callSid);
     callData.notes = notes;
     callData.updated_at = formatDateForClickHouse(new Date());
     await this.insertCallLog(callData);
 
-    // const query = `ALTER TABLE call_logs UPDATE notes = '${notes}', updated_at = now() WHERE call_sid = '${callSid}' AND user_id = '${user_id}' `;
-
-    // const resultSet = await this.client.query({
-    //   query: query,
-    //   format: 'JSONEachRow',
-    // })
-
     return { updated: true, message: 'Note updated successfully' };
   }
 
-  async deleteCallNotes(callSid: string, user_id: string){
-  //   const checkQuery = `
-  //   SELECT count() AS count
-  //   FROM call_logs
-  //   WHERE call_sid = '${callSid}' AND user_id = '${user_id}'
-  // `;
-
-  // const checkResult = await this.client.query({
-  //   query: checkQuery,
-  //   format: 'JSONEachRow',
-  // });
-
-  // const [{count}] : {count: number}[] = await checkResult.json();
-
-  // if (count === 0) {
-  //   return { updated: false, message: 'No matching call found' };
-  // }
-    // const query = `ALTER TABLE call_logs UPDATE notes = '' , updated_at = now() WHERE call_sid = '${callSid}' AND user_id = '${user_id}' `;
-
-    // const resultSet = await this.client.query({
-    //   query: query,
-    //   format: 'JSONEachRow',
-    // });
-
+  async deleteCallNotes(callSid: string, user_id: string) {
     const callData = await this.getCallLog(callSid);
     callData.notes = '';
     callData.updated_at = formatDateForClickHouse(new Date());
     await this.insertCallLog(callData);
 
     return { updated: true, message: 'Note deleted successfully' };
-    
   }
 
   async getUserById(userId: string) {
@@ -472,7 +385,7 @@ GROUP BY call_sid`;
       format: 'JSONEachRow',
     });
 
-    const rows : User[] = await resultSet.json();
+    const rows: User[] = await resultSet.json();
     return rows[0];
   }
 
@@ -485,11 +398,11 @@ GROUP BY call_sid`;
       format: 'JSONEachRow',
     });
 
-    const rows : User[] = await resultSet.json();
+    const rows: User[] = await resultSet.json();
     return rows[0];
   }
 
-  async getAllUsers(){
+  async getAllUsers() {
     const query = `
       SELECT * FROM users`;
 
@@ -498,40 +411,37 @@ GROUP BY call_sid`;
       format: 'JSONEachRow',
     });
 
-    const rows : User[] = await resultSet.json();
+    const rows: User[] = await resultSet.json();
     return rows;
   }
 
   async createUser(username: string, password: string) {
-
-    try{
+    try {
       const existingUser = await this.client.query({
         query: `SELECT username FROM users WHERE username = '${username}' LIMIT 1`,
         format: 'JSON',
       });
-    
+
       const rows = await existingUser.json();
       const data = rows.data;
 
-      if(data.length > 0){
+      if (data.length > 0) {
         throw new ConflictException('Username already exists');
       }
 
       const salt = await bcrypt.genSalt();
-    const encryptedPassword = await bcrypt.hash(password, salt);
-  
+      const encryptedPassword = await bcrypt.hash(password, salt);
 
-    await this.client.insert({
-      table: 'users',
-      values: [{username: username, password: encryptedPassword}],
-      format: 'JSONEachRow',
-    });
+      await this.client.insert({
+        table: 'users',
+        values: [{ username: username, password: encryptedPassword }],
+        format: 'JSONEachRow',
+      });
 
-    return  { message: 'User created successfully' };
-    }catch(error){
+      return { message: 'User created successfully' };
+    } catch (error) {
       throw new ConflictException('Username already exists');
     }
-
   }
 
   async validateUserPassword(

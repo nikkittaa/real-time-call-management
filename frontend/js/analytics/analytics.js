@@ -4,19 +4,21 @@ export async function loadAnalytics() {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    if(res.status !== 200) {
+    if(res.status === 401) {
       alert('Session expired or invalid. Please login again.');
       window.location.href = '/';
       return;
     }
+    if(res.status !== 200) {
+      alert('Error fetching analytics');
+      return;
+    }
     const data = await res.json();
-    console.log(data);
   
     document.getElementById('totalCalls').innerText = data.total_calls;
     document.getElementById('avgDuration').innerText = data.avg_duration + ' sec';
     document.getElementById('successRate').innerText = data.success_rate + '%';
   
-    // Draw chart for status distribution
 
     const statusColors = {
         'completed': '#4CAF50', // green

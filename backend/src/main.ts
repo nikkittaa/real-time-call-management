@@ -10,14 +10,14 @@ async function bootstrap() {
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,             // strips unknown fields
-      transform: true,             // auto-transforms payloads to DTO instances
+      whitelist: true, // strips unknown fields
+      transform: true, // auto-transforms payloads to DTO instances
       transformOptions: {
         enableImplicitConversion: true, // auto-converts types (e.g., string → number)
       },
     }),
   );
-  
+
   await app.listen(3002);
 }
 bootstrap();

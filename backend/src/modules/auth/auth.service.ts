@@ -27,7 +27,9 @@ export class AuthService {
 
   async validateToken(token: string): Promise<JwtPayload> {
     try {
-      return this.jwtService.verify(token, {secret: this.configService.get('JWT_SECRET')});
+      return this.jwtService.verify(token, {
+        secret: this.configService.get('JWT_SECRET'),
+      });
     } catch (err) {
       throw new UnauthorizedException('Invalid or expired token');
     }
