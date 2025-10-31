@@ -25,20 +25,23 @@ export class HealthController {
       await this.firebaseService.read('.info/connected');
       status.firebase = 'ok';
     } catch (error) {
-      status.firebase = 'error';
+      const err = error as Error;
+      status.firebase = `error: ${err.message}`;
     }
 
     try {
       const result = await this.clickhouseService.getAnalytics('1234567890');
       status.clickhouse = result ? 'ok' : 'error';
     } catch (error) {
-      status.clickhouse = 'error';
+      const err = error as Error;
+      status.clickhouse = `error: ${err.message}`;
     }
 
     try {
       status.twilio = await this.twilioService.checkHealth();
     } catch (error) {
-      status.twilio = 'error';
+      const err = error as Error;
+      status.twilio = `error: ${err.message}`;
     }
 
     if (

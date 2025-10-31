@@ -12,7 +12,9 @@ export class FirebaseService {
   constructor(private configService: ConfigService) {
     const databaseURL = this.configService.get<string>('FIREBASE_DB_URL');
 
-    const serviceAccountClone = JSON.parse(JSON.stringify(serviceAccount));
+    const serviceAccountClone: admin.ServiceAccount = JSON.parse(
+      JSON.stringify(serviceAccount),
+    ) as admin.ServiceAccount;
 
     let app;
     if (getApps().length === 0) {

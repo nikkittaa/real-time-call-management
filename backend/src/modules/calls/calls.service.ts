@@ -20,8 +20,8 @@ export class CallsService {
     return this.clickhouseService.updateCallNotes(createNotesDto);
   }
 
-  async deleteCallNotes(callSid: string, user_id: string) {
-    return this.clickhouseService.deleteCallNotes(callSid, user_id);
+  async deleteCallNotes(callSid: string) {
+    return this.clickhouseService.deleteCallNotes(callSid);
   }
 
   async getFilteredCalls(userId: string, getCallLogsDto: GetCallLogsDto) {

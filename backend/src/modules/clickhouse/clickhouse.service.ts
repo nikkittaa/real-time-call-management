@@ -357,7 +357,7 @@ GROUP BY call_sid`;
   }
 
   async updateCallNotes(createNotesDto: CreateNotesDto) {
-    const { id: callSid, user_id, notes } = createNotesDto;
+    const { id: callSid, notes } = createNotesDto;
 
     const callData = await this.getCallLog(callSid);
     callData.notes = notes;
@@ -367,7 +367,7 @@ GROUP BY call_sid`;
     return { updated: true, message: 'Note updated successfully' };
   }
 
-  async deleteCallNotes(callSid: string, user_id: string) {
+  async deleteCallNotes(callSid: string) {
     const callData = await this.getCallLog(callSid);
     callData.notes = '';
     callData.updated_at = formatDateForClickHouse(new Date());
@@ -440,7 +440,8 @@ GROUP BY call_sid`;
 
       return { message: 'User created successfully' };
     } catch (error) {
-      throw new ConflictException('Username already exists');
+      const err = error as Error;
+      throw new ConflictException(`Username already exists: ${err.message}`);
     }
   }
 

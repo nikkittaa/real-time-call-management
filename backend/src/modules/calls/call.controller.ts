@@ -24,6 +24,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtPayload } from 'src/common/interfaces/jwt-payload.interface';
 import { ExportCallDto } from './dto/export-call.dto';
 import { Readable } from 'stream';
+import type { CallDataFirebase } from 'src/common/interfaces/calldata-firebase.interface';
 
 @Controller('calls')
 export class CallController {
@@ -82,13 +83,16 @@ export class CallController {
         secret: this.configService.get('JWT_SECRET'),
       });
     } catch (err) {
-      throw new UnauthorizedException('Invalid or expired token');
+      const error = err as Error;
+      throw new UnauthorizedException(
+        `Invalid or expired token: ${error.message}`,
+      );
     }
     const userId = payload.user_id;
     return new Observable((subscriber) => {
       this.firebaseService.listen(`calls/${userId}`, (snapshot) => {
         subscriber.next({
-          data: snapshot.val(),
+          data: snapshot.val() as CallDataFirebase,
         } as MessageEvent);
       });
     });
@@ -117,7 +121,7 @@ export class CallController {
 
   @Delete('/:id/notes')
   @UseGuards(AuthGuard('jwt'))
-  async deleteCallNotes(@GetUser() user: User, @Param('id') id: string) {
-    return this.callService.deleteCallNotes(id, user.user_id);
+  async deleteCallNotes(@Param('id') id: string) {
+    return this.callService.deleteCallNotes(id);
   }
 }

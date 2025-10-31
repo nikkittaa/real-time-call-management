@@ -31,7 +31,10 @@ export class AuthService {
         secret: this.configService.get('JWT_SECRET'),
       });
     } catch (err) {
-      throw new UnauthorizedException('Invalid or expired token');
+      const error = err as Error;
+      throw new UnauthorizedException(
+        `Invalid or expired token: ${error.message}`,
+      );
     }
   }
 

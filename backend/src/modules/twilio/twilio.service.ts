@@ -51,7 +51,8 @@ export class TwilioService {
         .fetch();
       return account && account.sid ? 'ok' : 'error';
     } catch (error) {
-      console.error('Twilio health check failed:', error.message);
+      const err = error as Error;
+      console.error('Twilio health check failed:', err.message);
       return 'error';
     }
   }

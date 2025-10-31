@@ -15,6 +15,8 @@ import { User } from '../users/user.entity';
 import { formatDateForClickHouse } from 'src/utils/formatDatefoClickhouse';
 import { FirebaseService } from '../firebase/firebase.service';
 import { CallStatus } from 'src/common/enums/call-status.enum';
+import type { TwilioCallEvent } from 'src/common/interfaces/twilio-callevent.interface';
+import type { TwilioRecordingEvent } from 'src/common/interfaces/twilio-recordingevent.interface';
 
 @Controller('twilio')
 export class TwilioController {
@@ -37,9 +39,8 @@ export class TwilioController {
         userId: user.user_id,
       };
     } catch (error) {
-      throw new BadRequestException(
-        'Failed to initiate call: ' + error.message,
-      );
+      const err = error as Error;
+      throw new BadRequestException(`Failed to initiate call: ${err.message}`);
     }
   }
 
@@ -55,16 +56,17 @@ export class TwilioController {
   }
 
   @Post('events')
-  async handleEvent(@Body() body: any) {
+  async handleEvent(@Body() body: TwilioCallEvent) {
     const userData = await this.firebaseService.read(`calls/${body.CallSid}`);
-    const userId = userData.val()?.user_id;
+    const user = userData.val() as { user_id: string } | undefined;
+    const userId = user?.user_id;
 
     await this.firebaseService.write(`calls/${userId}/${body.CallSid}`, {
       status: body.CallStatus,
       from_number: body.From,
       to_number: body.To,
     });
-    if (Object.values(CallStatus).includes(body.CallStatus)) {
+    if (Object.values(CallStatus).includes(body.CallStatus as CallStatus)) {
       const fullCall = await this.twilioService.fetchFullCallLog(body.CallSid);
       await this.clickhouseService.insertCallLog({
         call_sid: fullCall.sid,
@@ -86,8 +88,7 @@ export class TwilioController {
   }
 
   @Post('recording-events')
-  async handleRecordingEvent(@Body() body: any) {
-    //console.log('Recording event received:', body);
+  async handleRecordingEvent(@Body() body: TwilioRecordingEvent) {
     const { CallSid, RecordingSid, RecordingUrl } = body;
 
     if (!CallSid || !RecordingSid || !RecordingUrl) {
