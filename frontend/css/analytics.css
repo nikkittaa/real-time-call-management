@@ -93,3 +93,32 @@ body {
     font-size: 1rem;
     color: #2563eb;
   }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .filters input,
+  .filters select,
+  .filters button {
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+  
+  .filters button {
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  .filters button:hover {
+    background-color: #0056b3;
+  }
+  

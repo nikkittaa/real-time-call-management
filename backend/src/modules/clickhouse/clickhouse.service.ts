@@ -37,17 +37,16 @@ export class ClickhouseService implements OnModuleInit {
   async getCallLog(callSid: string) {
     const query = `
     SELECT call_sid, 
-      argMax(from_number, updated_at) as from_number, 
-      argMax(to_number, updated_at) as to_number, 
-      argMax(status,  updated_at) as status,
-      argMax(duration, updated_at) as duration,
-      argMax(start_time, updated_at) as start_time,
-      argMax(end_time, updated_at) as end_time ,
-      argMax(notes, updated_at) as notes,
-      argMax(recording_sid, updated_at) as recording_sid,
-      argMax(recording_url, updated_at) as recording_url,
-      argMax(user_id, updated_at) as user_id, 
-      argMax(created_at, updated_at) as created_at
+      argMax(from_number, created_at) as from_number, 
+      argMax(to_number, created_at) as to_number, 
+      argMax(status,  created_at) as status,
+      argMax(duration, created_at) as duration,
+      argMax(start_time, created_at) as start_time,
+      argMax(end_time, created_at) as end_time ,
+      argMax(notes, created_at) as notes,
+      argMax(recording_sid, created_at) as recording_sid,
+      argMax(recording_url, created_at) as recording_url,
+      argMax(user_id, created_at) as user_id
     FROM call_logs
     WHERE call_sid = '${callSid}'
     GROUP BY call_sid
@@ -67,16 +66,16 @@ export class ClickhouseService implements OnModuleInit {
     const query = `
       SELECT 
         call_sid, 
-        argMax(from_number, updated_at) as from_number, 
-        argMax(to_number, updated_at) as to_number, 
-        argMax(status,  updated_at) as status,
-        argMax(duration, updated_at) as duration,
-        argMax(start_time, updated_at) as start_time,
-        argMax(end_time, updated_at) as end_time ,
-        argMax(notes, updated_at) as notes,
-        argMax(recording_sid, updated_at) as recording_sid,
-        argMax(recording_url, updated_at) as recording_url
-      FROM call_logs 
+        argMax(from_number, created_at) as from_number, 
+        argMax(to_number, created_at) as to_number, 
+        argMax(status,  created_at) as status,
+        argMax(duration, created_at) as duration,
+        argMax(start_time, created_at) as start_time,
+        argMax(end_time, created_at) as end_time ,
+        argMax(notes, created_at) as notes,
+        argMax(recording_sid, created_at) as recording_sid,
+        argMax(recording_url, created_at) as recording_url
+      FROM call_logs
       WHERE user_id = '${userId}' 
       GROUP BY call_sid
       ORDER BY start_time DESC
@@ -92,67 +91,12 @@ export class ClickhouseService implements OnModuleInit {
     return { data: result };
   }
 
-  // async getFilteredCalls(
-  //   userId: string,
-  //   getCallLogsDto: GetCallLogsDto
-  // ) {
-  //   const {page, limit, from, to, phone, status} = getCallLogsDto;
-  //   const offset = (page - 1) * limit;
-  //   const conditions: string[] = [];
-  //   conditions.push(`user_id = '${userId}'`);
-
-  //   // Handle date range
-  //   if (from) {
-  //     // If 'to' is missing, default it to today’s date (in YYYY-MM-DD)
-  //     const toDate =
-  //       formatDateForClickHouse(to) || formatDateForClickHouse(new Date());
-
-  //     conditions.push(`start_time BETWEEN '${formatDateForClickHouse(from)}' AND '${toDate}'`);
-  //   }
-
-  //   // Phone filter
-  //   if (phone) {
-  //     conditions.push(`(from_number = '${phone}' OR to_number = '${phone}')`);
-  //   }
-
-  //   // Status filter
-  //   if (status) {
-  //     conditions.push(`status = '${status}'`);
-  //   }
-
-  //   // Combine into WHERE clause
-  //   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
-
-  //   const query = `
-  //     SELECT call_sid,
-  //       argMax(from_number, updated_at) as from_number,
-  //       argMax(to_number, updated_at) as to_number,
-  //       argMax(status,  updated_at) as status,
-  //       argMax(duration, updated_at) as duration,
-  //       argMax(start_time, updated_at) as start_time,
-  //       argMax(end_time, updated_at) as end_time ,
-  //       argMax(notes, updated_at) as notes,
-  //       argMax(recording_sid, updated_at) as recording_sid,
-  //       argMax(recording_url, updated_at) as recording_url
-  //     FROM call_logs
-  //     ${whereClause}
-  //     GROUP BY call_sid
-  //     ORDER BY argMax(start_time, updated_at) as start_time DESC
-
-  //     LIMIT ${limit} OFFSET ${offset}
-  //   `;
-
-  //   const resultSet  = await this.client.query({ query, format: 'JSONEachRow' });
-  //   const result : CallLog[] = await resultSet.json();
-  //   return {data:result};
-  // }
-
   async getFilteredCalls(userId: string, getCallLogsDto: GetCallLogsDto) {
     const { page, limit, from, to, phone, status } = getCallLogsDto;
     const offset = (page - 1) * limit;
     const conditions: string[] = [];
 
-    conditions.push(`argMax(user_id, updated_at) = '${userId}'`);
+    conditions.push(`argMax(user_id, created_at) = '${userId}'`);
 
     // Handle date range
     if (from) {
@@ -180,23 +124,22 @@ export class ClickhouseService implements OnModuleInit {
     const query = `
       SELECT 
         call_sid, 
-        argMax(from_number, updated_at) AS from_number, 
-        argMax(to_number, updated_at) AS to_number, 
-        argMax(status, updated_at) AS status,
-        argMax(duration, updated_at) AS duration,
-        argMax(start_time, updated_at) AS start_time,
-        argMax(end_time, updated_at) AS end_time,
-        argMax(notes, updated_at) AS notes,
-        argMax(recording_sid, updated_at) AS recording_sid,
-        argMax(recording_url, updated_at) AS recording_url
+        argMax(from_number, created_at) AS from_number, 
+        argMax(to_number, created_at) AS to_number, 
+        argMax(status, created_at) AS status,
+        argMax(duration, created_at) AS duration,
+        argMax(start_time, created_at) AS start_time,
+        argMax(end_time, created_at) AS end_time,
+        argMax(notes, created_at) AS notes,
+        argMax(recording_sid, created_at) AS recording_sid,
+        argMax(recording_url, created_at) AS recording_url
       FROM call_logs
       GROUP BY call_sid
       ${whereClause}
-      ORDER BY argMax(start_time, updated_at) as start_time DESC
+      ORDER BY argMax(start_time, created_at) as start_time DESC
       LIMIT ${limit} OFFSET ${offset}
     `;
 
-    //  console.log(query);
     const resultSet = await this.client.query({ query, format: 'JSONEachRow' });
     const result: CallLog[] = await resultSet.json();
 
@@ -208,18 +151,16 @@ export class ClickhouseService implements OnModuleInit {
     recordingSid: string,
     recordingUrl: string,
   ) {
-    //console.log("updating recording");
     const callData = await this.getCallLog(callSid);
     callData.recording_sid = recordingSid;
     callData.recording_url = recordingUrl;
-    callData.updated_at = formatDateForClickHouse(new Date());
     await this.insertCallLog(callData);
   }
 
   async exportCalls(userId: string, exportCallDto: ExportCallDto) {
     const { from, to, phone, status } = exportCallDto;
     const conditions: string[] = [];
-    conditions.push(`argMax(user_id, updated_at) = '${userId}'`);
+    conditions.push(`argMax(user_id, created_at) = '${userId}'`);
 
     // Handle date range
     if (from) {
@@ -247,19 +188,19 @@ export class ClickhouseService implements OnModuleInit {
     const query = `
       SELECT 
         call_sid, 
-        argMax(from_number, updated_at) AS from_number, 
-        argMax(to_number, updated_at) AS to_number, 
-        argMax(status, updated_at) AS status,
-        argMax(duration, updated_at) AS duration,
-        argMax(start_time, updated_at) AS start_time,
-        argMax(end_time, updated_at) AS end_time,
-        argMax(notes, updated_at) AS notes,
-        argMax(recording_sid, updated_at) AS recording_sid,
-        argMax(recording_url, updated_at) AS recording_url
+        argMax(from_number, created_at) AS from_number, 
+        argMax(to_number, created_at) AS to_number, 
+        argMax(status, created_at) AS status,
+        argMax(duration, created_at) AS duration,
+        argMax(start_time, created_at) AS start_time,
+        argMax(end_time, created_at) AS end_time,
+        argMax(notes, created_at) AS notes,
+        argMax(recording_sid, created_at) AS recording_sid,
+        argMax(recording_url,created_at) AS recording_url
       FROM call_logs
       GROUP BY call_sid
       ${whereClause}
-      ORDER BY argMax(start_time, updated_at) as start_time DESC
+      ORDER BY argMax(start_time, created_at) as start_time DESC
     `;
 
     const resultSet = await this.client.query({
@@ -281,18 +222,45 @@ export class ClickhouseService implements OnModuleInit {
     return csv;
   }
 
-  async getAnalytics(userId: string) {
+  async getAnalytics(userId: string, getCallLogsDto: GetCallLogsDto) {
+    const { from, to, phone, status } = getCallLogsDto;
+    const conditions: string[] = [];
+    conditions.push(`argMax(user_id, created_at) = '${userId}'`);
+
+    // Handle date range
+    if (from) {
+      const toDate =
+        formatDateForClickHouse(to) || formatDateForClickHouse(new Date());
+      conditions.push(
+        `(argMax(start_time, created_at) BETWEEN '${formatDateForClickHouse(from)}' AND '${toDate}')`,
+      );
+    }
+    // Phone filter
+    if (phone) {
+      conditions.push(
+        `(argMax(from_number, created_at) = '${phone}' OR argMax(to_number, created_at) = '${phone}')`,
+      );
+    }
+    // Status filter
+    if (status) {
+      conditions.push(`status = '${status}'`);
+    }
+
+    const whereClause = conditions.length
+      ? ` HAVING ${conditions.join(' AND ')}`
+      : '';
+
     // Subquery: get the "latest" values per call_sid
     const baseSubquery = `
       SELECT
         call_sid,
-        argMax(duration, updated_at) AS duration,
-        argMax(status, updated_at) AS status
+        argMax(duration, created_at) AS duration,
+        argMax(status, created_at) AS status
       FROM call_logs
-      WHERE user_id = '${userId}'
       GROUP BY call_sid
+       ${whereClause}
     `;
-
+    //console.log("here", baseSubquery);
     // Totals: total calls, avg duration, success rate
     const totalsQuery = `
       SELECT
@@ -341,8 +309,8 @@ export class ClickhouseService implements OnModuleInit {
 
   async getCallNotes(callSid: string, userId: string) {
     const query = `SELECT 
-  argMax(notes, updated_at) AS notes
-FROM call_logs
+  argMax(notes, created_at) AS notes
+FROM call_logs_new    
 WHERE call_sid = '${callSid}' 
   AND user_id = '${userId}'
 GROUP BY call_sid`;
@@ -361,7 +329,6 @@ GROUP BY call_sid`;
 
     const callData = await this.getCallLog(callSid);
     callData.notes = notes;
-    callData.updated_at = formatDateForClickHouse(new Date());
     await this.insertCallLog(callData);
 
     return { updated: true, message: 'Note updated successfully' };
@@ -370,7 +337,6 @@ GROUP BY call_sid`;
   async deleteCallNotes(callSid: string) {
     const callData = await this.getCallLog(callSid);
     callData.notes = '';
-    callData.updated_at = formatDateForClickHouse(new Date());
     await this.insertCallLog(callData);
 
     return { updated: true, message: 'Note deleted successfully' };

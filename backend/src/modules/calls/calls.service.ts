@@ -32,7 +32,7 @@ export class CallsService {
     return this.clickhouseService.exportCalls(userId, exportCallDto);
   }
 
-  async getAnalytics(userId: string) {
-    return this.clickhouseService.getAnalytics(userId);
+  async getAnalytics(userId: string, getCallLogsDto: GetCallLogsDto) {
+    return this.clickhouseService.getAnalytics(userId, getCallLogsDto);
   }
 }

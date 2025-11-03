@@ -39,6 +39,7 @@ export class TwilioService {
     await this.firebaseService.write(`calls/${call.sid}`, {
       user_id: userId,
     });
+    console.log(call);
 
     return call;
   }

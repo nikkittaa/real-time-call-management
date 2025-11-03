@@ -2,6 +2,7 @@ import { Controller, Get, HttpException, HttpStatus } from '@nestjs/common';
 import { FirebaseService } from '../modules/firebase/firebase.service';
 import { ClickhouseService } from '../modules/clickhouse/clickhouse.service';
 import { TwilioService } from '../modules/twilio/twilio.service';
+import { GetCallLogsDto } from 'src/modules/calls/dto/get-call-logs.dto';
 
 @Controller('health')
 export class HealthController {
@@ -30,7 +31,10 @@ export class HealthController {
     }
 
     try {
-      const result = await this.clickhouseService.getAnalytics('1234567890');
+      const result = await this.clickhouseService.getAnalytics(
+        '1234567890',
+        new GetCallLogsDto(),
+      );
       status.clickhouse = result ? 'ok' : 'error';
     } catch (error) {
       const err = error as Error;

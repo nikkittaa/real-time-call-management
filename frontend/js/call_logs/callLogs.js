@@ -1,5 +1,6 @@
 import { getToken } from './utils.js';
 import { viewNote, editNote, deleteNote } from './notes.js';
+import { checkAuth } from '../dashboard/utils.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const token = getToken();
@@ -8,6 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = '/';
     return;
   }
+  await checkAuth();
 
   const tableBody = document.getElementById('callLogsBody');
   const prevBtn = document.getElementById('prevPage');
@@ -23,10 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const exportBtn = document.getElementById('exportCalls');
 
   exportBtn.addEventListener('click', async () => {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-    });
+    const params = new URLSearchParams({});
 
     if (fromDate.value) {
       params.append('from', new Date(fromDate.value).toISOString());
@@ -35,7 +34,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       params.append('to', new Date(toDate.value).toISOString());
     }
     
-
     if (phone.value) {
       params.append('phone', phone.value.trim());
     }

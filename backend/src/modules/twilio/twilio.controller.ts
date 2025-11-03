@@ -48,11 +48,10 @@ export class TwilioController {
   twiml(@Res() res: Response) {
     res.type('text/xml');
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-
-    <Say voice="alice">Hello, this is a call from our application. Please stay on the line.</Say>
+    <Response>
+        <Say voice="alice">Hello, this is a call from our application. Please stay on the line.</Say>
         <Say voice="alice">Thank you for calling. Have a great day!</Say>
-</Response>`);
+    </Response>`);
   }
 
   @Post('events')
@@ -77,8 +76,8 @@ export class TwilioController {
         start_time: formatDateForClickHouse(fullCall.startTime),
         end_time: formatDateForClickHouse(fullCall.endTime),
         user_id: userId,
-        created_at: formatDateForClickHouse(fullCall.startTime),
-        updated_at: formatDateForClickHouse(fullCall.startTime),
+        // created_at: formatDateForClickHouse(fullCall.startTime),
+        // updated_at: formatDateForClickHouse(fullCall.startTime),
       });
 
       await this.firebaseService.delete(`calls/${userId}/${body.CallSid}`);

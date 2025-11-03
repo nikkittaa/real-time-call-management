@@ -71,8 +71,11 @@ export class CallController {
 
   @Get('analytics')
   @UseGuards(AuthGuard('jwt'))
-  async getAnalytics(@GetUser() user: User) {
-    return this.callService.getAnalytics(user.user_id);
+  async getAnalytics(
+    @GetUser() user: User,
+    @Query() getCallLogsDto: GetCallLogsDto,
+  ) {
+    return this.callService.getAnalytics(user.user_id, getCallLogsDto);
   }
 
   @Sse('stream')
