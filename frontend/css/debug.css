@@ -1,0 +1,122 @@
+body {
+    font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+    background-color: #fff;
+    color: #121c2d;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 40px;
+  }
+  
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+  
+  .tabs {
+    display: flex;
+    gap: 2rem;
+    border-bottom: 2px solid #e2e2e2;
+    margin-bottom: 30px;
+  }
+  
+  .tabs span {
+    font-size: 1.2rem;
+    color: #666;
+    padding-bottom: 8px;
+    cursor: pointer;
+  }
+  
+  .tabs .active {
+    color: #121c2d;
+    border-bottom: 3px solid #e80000;
+    font-weight: 600;
+  }
+  
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .properties {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 40px;
+  }
+  
+  .properties p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    margin: 8px 0;
+  }
+  
+  .properties strong {
+    font-weight: 700;
+    display: inline-block;
+    width: 130px;
+  }
+  
+  .properties a {
+    color: #1759db;
+    text-decoration: none;
+  }
+  
+  .media-section,
+  .events-section {
+    margin-top: 40px;
+  }
+  
+  .events-box {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 15px;
+    max-height: 250px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  
+  .events-box::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .events-box::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 4px;
+  }
+
+  .event-item {
+    border-bottom: 1px solid #e6e6e6;
+    padding: 8px 0;
+  }
+  
+  .event-item:hover {
+    background-color: #f6f8fc;
+  }
+  
+  .event-header {
+    cursor: pointer;
+    font-weight: 500;
+    color: #0263e0;
+    margin: 0;
+  }
+  
+  .event-details {
+    display: none;
+    background: #f9f9f9;
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 6px;
+    font-family: monospace;
+    white-space: pre-wrap;
+    overflow-x: auto;
+  }

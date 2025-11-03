@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       data.forEach((log) => {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td>${log.call_sid}</td>
+          <td><a href="/call_summary.html?callSid=${log.call_sid}" target="_self">${log.call_sid}</a></td>
           <td>${log.from_number}</td>
           <td>${log.to_number}</td>
           <td>${log.status}</td>

@@ -39,11 +39,33 @@ export class TwilioService {
     await this.firebaseService.write(`calls/${call.sid}`, {
       user_id: userId,
     });
-    console.log(call);
 
     return call;
   }
 
+  async fetchSummary(callSid: string) {
+    const fullCall = await this.fetchFullCallLog(callSid);
+    const events = await this.client.api.v2010.accounts(this.client.accountSid).calls(callSid).events.list();
+    const recordings = await this.client.api.v2010.accounts(this.client.accountSid).calls(callSid).recordings.list();
+
+    return {
+      callSid: fullCall.sid,
+      from: fullCall.from,
+      to: fullCall.to,
+      date: fullCall.dateCreated,
+      start_time: fullCall.startTime,
+      end_time: fullCall.endTime,
+      direction: fullCall.direction,
+      duration: fullCall.duration,
+      status: fullCall.status,
+      price: fullCall.price,
+      price_unit: fullCall.priceUnit,
+      recordings: recordings,
+      events: events,
+    }
+    
+  }
+  
   async checkHealth() {
     try {
       // Lightweight ping to verify Twilio credentials & connectivity

@@ -5,6 +5,8 @@ import {
   UseGuards,
   Res,
   BadRequestException,
+  Get,
+  Query,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { ClickhouseService } from '../clickhouse/clickhouse.service';
@@ -80,6 +82,8 @@ export class TwilioController {
         // updated_at: formatDateForClickHouse(fullCall.startTime),
       });
 
+    //  console.log("call inserted", fullCall);
+
       await this.firebaseService.delete(`calls/${userId}/${body.CallSid}`);
       await this.firebaseService.delete(`calls/${body.CallSid}`);
     }
@@ -99,5 +103,15 @@ export class TwilioController {
       RecordingUrl,
     );
     return 'OK';
+  }
+
+  @Get('summary')
+  @UseGuards(AuthGuard('jwt'))
+  async getSummary(@Query('callSid') callSid: string) {
+    if(!callSid) {
+      return 'CallSid is required';
+    }
+
+    return this.twilioService.fetchSummary(callSid);
   }
 }
