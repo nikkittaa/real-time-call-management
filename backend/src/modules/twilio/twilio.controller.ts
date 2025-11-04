@@ -7,6 +7,7 @@ import {
   BadRequestException,
   Get,
   Query,
+  Inject,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { ClickhouseService } from '../clickhouse/clickhouse.service';
@@ -19,14 +20,20 @@ import { FirebaseService } from '../firebase/firebase.service';
 import { CallStatus } from 'src/common/enums/call-status.enum';
 import type { TwilioCallEvent } from 'src/common/interfaces/twilio-callevent.interface';
 import type { TwilioRecordingEvent } from 'src/common/interfaces/twilio-recordingevent.interface';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 
 @Controller('twilio')
 export class TwilioController {
+  private readonly logger: Logger;
   constructor(
     private readonly clickhouseService: ClickhouseService,
     private twilioService: TwilioService,
     private firebaseService: FirebaseService,
-  ) {}
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly parentLogger: Logger,
+  ) {
+    this.logger = this.parentLogger.child({ context: 'TwilioController' });
+  }
 
   @Post('make')
   @UseGuards(AuthGuard('jwt'))
@@ -80,20 +87,27 @@ export class TwilioController {
         user_id: userId,
       });
 
-
+      //const callSummaryInfo = await this.twilioService.fetchSummary(body.CallSid);
+      //console.log("callSummaryInfo", callSummaryInfo.price);
+      //await this.clickhouseService.insertCallDebugInfo(callSummaryInfo);
       await this.firebaseService.delete(`calls/${userId}/${body.CallSid}`);
       await this.firebaseService.delete(`calls/${body.CallSid}`);
+
+      setTimeout(async () => {
+        try {
+          const callSummary = await this.twilioService.fetchSummary(body.CallSid);
+          await this.clickhouseService.insertCallDebugInfo(callSummary);
+          this.logger.info(`Call summary inserted for callSid: ${body.CallSid}`);
+        } catch (error) {
+          this.logger.error(`Failed to fetch or insert call summary `, error);
+        }
+      }, 10000);
     }
-    return 'OK';
   }
 
   @Post('recording-events')
   async handleRecordingEvent(@Body() body: TwilioRecordingEvent) {
     const { CallSid, RecordingSid, RecordingUrl } = body;
-
-    if (!CallSid || !RecordingSid || !RecordingUrl) {
-      return 'Missing required recording fields';
-    }
     await this.clickhouseService.updateRecordingInfo(
       CallSid,
       RecordingSid,
@@ -109,6 +123,6 @@ export class TwilioController {
       return 'CallSid is required';
     }
 
-    return this.twilioService.fetchSummary(callSid);
+    return this.clickhouseService.fetchSummary(callSid);
   }
 }

@@ -7,28 +7,40 @@ document.addEventListener('DOMContentLoaded', async () => {
   const res = await fetch(`http://localhost:3002/twilio/summary?callSid=${callSid}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
-  const data = await res.json();
+  let data;
+  try{
+    data = await res.json();
+  }catch(error){
+    alert('No data found');
+    window.location.href = '/call_logs.html';
+    return;
+  }
+
+
+  const recordings = JSON.parse(data.recordings);
+  const events = JSON.parse(data.events);
+
   document.getElementById('callSid').innerText = data.callSid;
   document.getElementById('from').innerText = data.from;
   document.getElementById('to').innerText = data.to;
-  document.getElementById('date').innerText = data.date;
+  document.getElementById('date').innerText = data.date_created;
   document.getElementById('startTime').innerText = data.start_time;
   document.getElementById('endTime').innerText = data.end_time;
   document.getElementById('direction').innerText = data.direction;
   document.getElementById('duration').innerText = data.duration;
   document.getElementById('status').innerText = data.status;
   document.getElementById('price').innerText = data.price;
-  document.getElementById('priceUnit').innerText = data.price_unit; 
+  document.getElementById('priceUnit').innerText = data.price_unit;
 
-  if(data.recordings.length > 0) {
+  if(recordings.length > 0) {
     const element = document.createElement('a');
-    element.href = `https:/api.twilio.com/${data.recordings[0].uri.replace('.json','')}`;
+    element.href = `https:/api.twilio.com/${recordings[0].uri.replace('.json','')}`;
     element.innerHTML = 'View Recording';
     document.getElementById('recordings').innerHTML = element.outerHTML;
   }
 
-  if(data.events.length > 0) {
-    for (const event of data.events) {
+  if(events.length > 0) {
+    for (const event of events) {
         const eventItem = document.createElement("div");
         eventItem.classList.add("event-item");
     

@@ -4,6 +4,8 @@ import { Twilio } from 'twilio';
 import { FirebaseService } from '../firebase/firebase.service';
 import {  WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import { CallDebugInfo } from 'src/common/interfaces/call-debug-info.interface';
+import { formatDateForClickHouse } from 'src/utils/formatDatefoClickhouse';
 
 
 @Injectable()
@@ -57,22 +59,22 @@ export class TwilioService {
     const fullCall = await this.fetchFullCallLog(callSid);
     const events = await this.client.api.v2010.accounts(this.client.accountSid).calls(callSid).events.list();
     const recordings = await this.client.api.v2010.accounts(this.client.accountSid).calls(callSid).recordings.list();
-
+   
     return {
       callSid: fullCall.sid,
       from: fullCall.from,
       to: fullCall.to,
-      date: fullCall.dateCreated,
-      start_time: fullCall.startTime,
-      end_time: fullCall.endTime,
+      date_created: formatDateForClickHouse(fullCall.dateCreated),
+      start_time: formatDateForClickHouse(fullCall.startTime),
+      end_time: formatDateForClickHouse(fullCall.endTime),
       direction: fullCall.direction,
-      duration: fullCall.duration,
+      duration: Number(fullCall.duration),
       status: fullCall.status,
-      price: fullCall.price,
+      price: fullCall.price ? parseFloat(fullCall.price) : 0.0,
       price_unit: fullCall.priceUnit,
-      recordings: recordings,
-      events: events,
-    }
+      recordings: JSON.stringify(recordings),
+      events: JSON.stringify(events),
+    } as CallDebugInfo;
     
   }
   

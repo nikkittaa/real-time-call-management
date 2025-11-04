@@ -10,6 +10,7 @@ import { ExportCallDto } from '../calls/dto/export-call.dto';
 import { ConfigService } from '@nestjs/config';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import { CallDebugInfo } from 'src/common/interfaces/call-debug-info.interface';
 
 @Injectable()
 export class ClickhouseService implements OnModuleInit {
@@ -312,6 +313,26 @@ export class ClickhouseService implements OnModuleInit {
       success_rate: Math.round(Number(totals[0].success_rate || 0)),
       status_distribution: statusData, // [{ status: 'completed', count: 123 }, ...]
     };
+  }
+
+  async insertCallDebugInfo(callDebugInfo: CallDebugInfo) {
+    await this.client.insert({
+      table: 'calls',
+      values: [callDebugInfo],
+      format: 'JSONEachRow',
+    });
+    this.logger.info(`Inserted call debug info for callSid: ${callDebugInfo.callSid}`);
+  }
+
+  async fetchSummary(callSid: string) {
+    const query = `
+      SELECT * FROM calls WHERE callSid = '${callSid}'`;
+    const resultSet = await this.client.query({
+      query: query,
+      format: 'JSONEachRow',
+    });
+    const result: CallDebugInfo[] = await resultSet.json();
+    return result[0];
   }
 
   async getCallNotes(callSid: string, userId: string) {

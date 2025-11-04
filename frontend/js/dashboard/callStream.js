@@ -60,7 +60,7 @@ export function initCallStream() {
   
       eventSource.onerror = (err) => {
 
-        callsContainer.innerHTML = '<p>Connection lost. Reconnecting...</p>';
+        callsContainer.innerHTML = '';
         eventSource.close();
   
         // Try reconnecting after 3 seconds
