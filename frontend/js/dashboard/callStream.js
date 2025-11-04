@@ -19,24 +19,40 @@ export function initCallStream() {
       eventSource.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          callsContainer.innerHTML = '';
-  
           if (!data || Object.keys(data).length === 0) {
             callsContainer.innerHTML = '<p>No active calls right now.</p>';
             return;
           }
+
+          if(data.event === 'child_removed'){
+            const card = document.getElementById(data.callSid);
+            const successMessage = document.getElementById('successMessage');
+            if(successMessage){
+              successMessage.innerText = '';
+            }
+            if(card){
+              card.remove();
+            }
+            return;
+          }else if(data.event === 'child_changed' || data.event === 'child_added'){
+              if(document.getElementById(data.callSid)){
+                const status = document.getElementById(`status-${data.callSid}`);
+                status.innerText = data.call.status || '-';
+              }else{
+                const card = document.createElement('div');
+                card.setAttribute('id', data.callSid);
+                card.className = 'call-card';
+                card.innerHTML = `
+                  <strong>Call SID:</strong> ${data.callSid}<br>
+                  <strong>From:</strong> ${data.call.from_number}<br>
+                  <strong>To:</strong> ${data.call.to_number || '-'}<br>
+                  <strong>Status:</strong><span id="status-${data.callSid}">${data.call.status || '-'}</span><br>
+                `;
+                callsContainer.appendChild(card);
+              }
+          }
   
-          Object.entries(data).forEach(([callSid, call]) => {
-            const card = document.createElement('div');
-            card.className = 'call-card';
-            card.innerHTML = `
-              <strong>Call SID:</strong> ${callSid}<br>
-              <strong>From:</strong> ${call.from_number}<br>
-              <strong>To:</strong> ${call.to_number || '-'}<br>
-              <strong>Status:</strong> ${call.status || '-'}<br>
-            `;
-            callsContainer.appendChild(card);
-          });
+          
         } catch (err) {
           console.error('Error parsing stream data:', err);
         }
@@ -59,7 +75,7 @@ export function initCallStream() {
         console.log('Stream closed silently. Reconnecting...');
         connect();
       }
-    }, 20000); // every 20 seconds
+    }, 20000); 
   
     connect();
   }

@@ -100,13 +100,15 @@ export class CallController {
     }
     const userId = payload.user_id;
     return new Observable((subscriber) => {
-      this.firebaseService.listen(`calls/${userId}`, (snapshot) => {
+      this.firebaseService.listen(`calls/${userId}`, (snapshot, eventType) => {
         this.logger.info(`Streamed call data for user: ${userId}`);
         subscriber.next({
-          data: snapshot.val() as CallDataFirebase,
+          data: JSON.stringify({ event: eventType, callSid: snapshot.key, call: snapshot.val()}),
         } as MessageEvent);
       });
     });
+
+  
   }
 
   @Get('/:callSid/notes')
