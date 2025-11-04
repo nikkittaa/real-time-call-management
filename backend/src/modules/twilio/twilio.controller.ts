@@ -78,11 +78,8 @@ export class TwilioController {
         start_time: formatDateForClickHouse(fullCall.startTime),
         end_time: formatDateForClickHouse(fullCall.endTime),
         user_id: userId,
-        // created_at: formatDateForClickHouse(fullCall.startTime),
-        // updated_at: formatDateForClickHouse(fullCall.startTime),
       });
 
-    //  console.log("call inserted", fullCall);
 
       await this.firebaseService.delete(`calls/${userId}/${body.CallSid}`);
       await this.firebaseService.delete(`calls/${body.CallSid}`);

@@ -19,7 +19,7 @@ export class ClickhouseService implements OnModuleInit {
 
   onModuleInit() {
     this.client = createClient({
-      url: this.configService.get('CLICKHOUSE_URLLLL'),
+      url: this.configService.get('CLICKHOUSE_URL'),
       username: this.configService.get('CLICKHOUSE_USERNAME'),
       password: this.configService.get('CLICKHOUSE_PASSWORD'),
       database: this.configService.get('CLICKHOUSE_DATABASE'),
