@@ -15,7 +15,7 @@ async function signup(username, password) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
     });
-    console.log(res);
+   // console.log(res);
 
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();

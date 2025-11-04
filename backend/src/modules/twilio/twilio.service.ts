@@ -1,16 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Twilio } from 'twilio';
 import { FirebaseService } from '../firebase/firebase.service';
+import {  WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
+
 
 @Injectable()
 export class TwilioService {
   private client: Twilio;
+  private readonly logger: Logger;
 
   constructor(
     private configService: ConfigService,
     private firebaseService: FirebaseService,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly parentLogger: Logger
   ) {
+    this.logger = this.parentLogger.child({ context: 'Twilio' });
     this.client = new Twilio(
       this.configService.get<string>('TWILIO_ACCOUNT_SID'),
       this.configService.get<string>('TWILIO_AUTH_TOKEN'),
@@ -18,10 +24,13 @@ export class TwilioService {
   }
 
   async fetchFullCallLog(callSid: string) {
-    return this.client.calls(callSid).fetch();
+    const call = await this.client.calls(callSid).fetch();
+    this.logger.info(`Full call log fetched for callSid: ${callSid}`);
+    return call;
   }
 
   async makeCall(to: string, userId: string) {
+    this.logger.info(`Making call to: ${to} for user: ${userId}`);
     const from = this.configService.get<string>(
       'TWILIO_PHONE_NUMBER',
     ) as string;
@@ -44,6 +53,7 @@ export class TwilioService {
   }
 
   async fetchSummary(callSid: string) {
+    this.logger.info(`Fetching summary for callSid: ${callSid}`);
     const fullCall = await this.fetchFullCallLog(callSid);
     const events = await this.client.api.v2010.accounts(this.client.accountSid).calls(callSid).events.list();
     const recordings = await this.client.api.v2010.accounts(this.client.accountSid).calls(callSid).recordings.list();

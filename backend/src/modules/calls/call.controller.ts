@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   Param,
   Patch,
   Query,
@@ -25,15 +26,21 @@ import { JwtPayload } from 'src/common/interfaces/jwt-payload.interface';
 import { ExportCallDto } from './dto/export-call.dto';
 import { Readable } from 'stream';
 import type { CallDataFirebase } from 'src/common/interfaces/calldata-firebase.interface';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 
 @Controller('calls')
 export class CallController {
+  private readonly logger: Logger;
   constructor(
     private readonly callService: CallsService,
     private readonly firebaseService: FirebaseService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-  ) {}
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly parentLogger: Logger
+  ) {
+    this.logger = this.parentLogger.child({ context: 'CallController' });
+  }
 
   @Get()
   @UseGuards(AuthGuard('jwt'))
@@ -94,6 +101,7 @@ export class CallController {
     const userId = payload.user_id;
     return new Observable((subscriber) => {
       this.firebaseService.listen(`calls/${userId}`, (snapshot) => {
+        this.logger.info(`Streamed call data for user: ${userId}`);
         subscriber.next({
           data: snapshot.val() as CallDataFirebase,
         } as MessageEvent);

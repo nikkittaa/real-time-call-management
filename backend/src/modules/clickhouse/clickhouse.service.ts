@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, OnModuleInit } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClickHouseClient, createClient } from '@clickhouse/client';
 import { formatDateForClickHouse } from 'src/utils/formatDatefoClickhouse';
 import * as bcrypt from 'bcrypt';
@@ -8,13 +8,17 @@ import { CreateNotesDto } from '../calls/dto/create-notes.dto';
 import { GetCallLogsDto } from '../calls/dto/get-call-logs.dto';
 import { ExportCallDto } from '../calls/dto/export-call.dto';
 import { ConfigService } from '@nestjs/config';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 
 @Injectable()
 export class ClickhouseService implements OnModuleInit {
   private client: ClickHouseClient;
+  private readonly logger: Logger;
 
-  constructor(private configService: ConfigService) {
+  constructor(private configService: ConfigService, @Inject(WINSTON_MODULE_PROVIDER) private readonly parentLogger: Logger) {
     this.configService = configService;
+    this.logger = this.parentLogger.child({ context: 'Clickhouse' });
   }
 
   onModuleInit() {
@@ -32,6 +36,7 @@ export class ClickhouseService implements OnModuleInit {
       values: [callData],
       format: 'JSONEachRow',
     });
+    this.logger.info(`Inserted call log for callSid: ${callData.call_sid}`);
   }
 
   async getCallLog(callSid: string) {
@@ -142,7 +147,7 @@ export class ClickhouseService implements OnModuleInit {
 
     const resultSet = await this.client.query({ query, format: 'JSONEachRow' });
     const result: CallLog[] = await resultSet.json();
-
+    this.logger.info(`Filtered calls for user: ${userId} - ${result.length} calls found`);
     return { data: result };
   }
 
@@ -155,6 +160,7 @@ export class ClickhouseService implements OnModuleInit {
     callData.recording_sid = recordingSid;
     callData.recording_url = recordingUrl;
     await this.insertCallLog(callData);
+    this.logger.info(`Updated recording info for callSid: ${callSid}`);
   }
 
   async exportCalls(userId: string, exportCallDto: ExportCallDto) {
@@ -209,7 +215,7 @@ export class ClickhouseService implements OnModuleInit {
     });
 
     const result: CallLog[] = await resultSet.json();
-
+    this.logger.info(`Exported calls for user: ${userId} - ${result.length} calls found`);
     const csv = [
       Object.keys(result[0]).join(','), // header
       ...result.map((row) =>
@@ -298,6 +304,7 @@ export class ClickhouseService implements OnModuleInit {
     });
 
     const statusData = await statusResultSet.json();
+    this.logger.info(`Analytics fetched for user: ${userId}`);
 
     return {
       total_calls: Number(totals[0].total_calls || 0),
@@ -330,7 +337,7 @@ GROUP BY call_sid`;
     const callData = await this.getCallLog(callSid);
     callData.notes = notes;
     await this.insertCallLog(callData);
-
+    this.logger.info(`Updated call notes for callSid: ${callSid}`);
     return { updated: true, message: 'Note updated successfully' };
   }
 
@@ -338,7 +345,7 @@ GROUP BY call_sid`;
     const callData = await this.getCallLog(callSid);
     callData.notes = '';
     await this.insertCallLog(callData);
-
+    this.logger.info(`Deleted call notes for callSid: ${callSid}`);
     return { updated: true, message: 'Note deleted successfully' };
   }
 

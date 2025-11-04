@@ -12,6 +12,7 @@ import { FirebaseService } from './modules/firebase/firebase.service';
 import { TwilioModule } from './modules/twilio/twilio.module';
 import { HealthController } from './health/health.controller';
 import { TwilioService } from './modules/twilio/twilio.service';
+import { LoggerModule } from './modules/logger/logger.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { TwilioService } from './modules/twilio/twilio.service';
     CallsModule,
     FirebaseModule,
     TwilioModule,
+    LoggerModule,
   ],
   controllers: [AppController, HealthController],
   providers: [
