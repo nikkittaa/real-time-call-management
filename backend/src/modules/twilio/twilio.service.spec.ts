@@ -148,7 +148,9 @@ describe('TwilioService', () => {
 
       expect(result).toEqual(mockCall);
       expect(mockTwilioClient.calls).toHaveBeenCalledWith(callSid);
-      expect(mockLogger.info).toHaveBeenCalledWith(`Full call log fetched for callSid: ${callSid}`);
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        `Full call log fetched for callSid: ${callSid}`,
+      );
     });
   });
 
@@ -156,7 +158,7 @@ describe('TwilioService', () => {
     it('should make call successfully', async () => {
       const to = '+0987654321';
       const userId = 'user123';
-      
+
       mockTwilioClient.calls = {
         create: jest.fn().mockResolvedValue(mockCall),
       };
@@ -173,22 +175,26 @@ describe('TwilioService', () => {
         recordingStatusCallbackEvent: ['completed'],
         applicationSid: 'AP123456789',
       });
-      expect(firebaseService.write).toHaveBeenCalledWith(`calls/${mockCall.sid}`, {
-        user_id: userId,
-      });
-      expect(mockLogger.info).toHaveBeenCalledWith(`Making call to: ${to} for user: ${userId}`);
+      expect(firebaseService.write).toHaveBeenCalledWith(
+        `calls/${mockCall.sid}`,
+        {
+          user_id: userId,
+        },
+      );
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        `Making call to: ${to} for user: ${userId}`,
+      );
     });
-
   });
 
   describe('fetchSummary', () => {
     it('should fetch call summary successfully', async () => {
       const callSid = 'CA123456789';
-      
+
       mockTwilioClient.calls.mockReturnValue({
         fetch: jest.fn().mockResolvedValue(mockCall),
       });
-      
+
       mockTwilioClient.api.v2010.accounts.mockReturnValue({
         calls: jest.fn().mockReturnValue({
           events: { list: jest.fn().mockResolvedValue(mockEvents) },
@@ -214,7 +220,9 @@ describe('TwilioService', () => {
         recordings: JSON.stringify(mockRecordings),
         events: JSON.stringify(mockEvents),
       });
-      expect(mockLogger.info).toHaveBeenCalledWith(`Fetching summary for callSid: ${callSid}`);
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        `Fetching summary for callSid: ${callSid}`,
+      );
     });
   });
 
@@ -230,7 +238,6 @@ describe('TwilioService', () => {
       expect(mockTwilioClient.api.accounts).toHaveBeenCalledWith('AC123456789');
     });
 
-
     it('should return error for network issues', async () => {
       mockTwilioClient.api.accounts.mockReturnValue({
         fetch: jest.fn().mockRejectedValue(new Error('Network timeout')),
@@ -240,8 +247,11 @@ describe('TwilioService', () => {
       const result = await twilioService.checkHealth();
 
       expect(result).toBe('error');
-      expect(consoleSpy).toHaveBeenCalledWith('Twilio health check failed:', 'Network timeout');
-      
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Twilio health check failed:',
+        'Network timeout',
+      );
+
       consoleSpy.mockRestore();
     });
   });

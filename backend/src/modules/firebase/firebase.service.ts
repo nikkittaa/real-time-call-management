@@ -42,10 +42,13 @@ export class FirebaseService {
 
   listen(
     path: string,
-    callback: (snapshot: admin.database.DataSnapshot, eventType: string) => void,
+    callback: (
+      snapshot: admin.database.DataSnapshot,
+      eventType: string,
+    ) => void,
   ) {
     const ref = this.db.ref(path);
-  
+
     const handlers = {
       child_added: (snap: admin.database.DataSnapshot) =>
         callback(snap, 'child_added'),
@@ -54,16 +57,15 @@ export class FirebaseService {
       child_removed: (snap: admin.database.DataSnapshot) =>
         callback(snap, 'child_removed'),
     };
-  
+
     ref.on('child_added', handlers.child_added);
     ref.on('child_changed', handlers.child_changed);
     ref.on('child_removed', handlers.child_removed);
-  
+
     return () => {
       ref.off('child_added', handlers.child_added);
       ref.off('child_changed', handlers.child_changed);
       ref.off('child_removed', handlers.child_removed);
     };
   }
-  
 }

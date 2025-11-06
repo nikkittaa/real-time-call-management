@@ -34,7 +34,7 @@ describe('CallController', () => {
     user_id: '123',
   };
 
-  const mockCallLog : CallLog = {
+  const mockCallLog: CallLog = {
     call_sid: 'CA123456789',
     from_number: '+1234567890',
     to_number: '+0987654321',
@@ -126,13 +126,16 @@ describe('CallController', () => {
         status: CallStatus.COMPLETED,
       };
       const expectedCalls = [mockCallLog];
-      
+
       callsService.getFilteredCalls.mockResolvedValue({ data: expectedCalls });
 
       const result = await callController.getCalls(mockUser, getCallLogsDto);
 
-      expect(result).toEqual({data:expectedCalls});
-      expect(callsService.getFilteredCalls).toHaveBeenCalledWith(mockUser.user_id, getCallLogsDto);
+      expect(result).toEqual({ data: expectedCalls });
+      expect(callsService.getFilteredCalls).toHaveBeenCalledWith(
+        mockUser.user_id,
+        getCallLogsDto,
+      );
       expect(callsService.getFilteredCalls).toHaveBeenCalledTimes(1);
     });
 
@@ -142,13 +145,16 @@ describe('CallController', () => {
         limit: 10,
       };
       const expectedCalls: CallLog[] = [];
-      
+
       callsService.getFilteredCalls.mockResolvedValue({ data: expectedCalls });
 
       const result = await callController.getCalls(mockUser, getCallLogsDto);
 
-      expect(result).toEqual({data:expectedCalls});
-      expect(callsService.getFilteredCalls).toHaveBeenCalledWith(mockUser.user_id, getCallLogsDto);
+      expect(result).toEqual({ data: expectedCalls });
+      expect(callsService.getFilteredCalls).toHaveBeenCalledWith(
+        mockUser.user_id,
+        getCallLogsDto,
+      );
     });
 
     it('should handle filters with date ranges', async () => {
@@ -159,15 +165,18 @@ describe('CallController', () => {
         to: new Date('2025-12-31'),
         phone: '+1234567890',
       };
-      
+
       callsService.getFilteredCalls.mockResolvedValue({ data: [mockCallLog] });
 
       // Act
       const result = await callController.getCalls(mockUser, getCallLogsDto);
 
       // Assert
-      expect(result).toEqual({data:[mockCallLog]});
-      expect(callsService.getFilteredCalls).toHaveBeenCalledWith(mockUser.user_id, getCallLogsDto);
+      expect(result).toEqual({ data: [mockCallLog] });
+      expect(callsService.getFilteredCalls).toHaveBeenCalledWith(
+        mockUser.user_id,
+        getCallLogsDto,
+      );
     });
   });
 
@@ -178,13 +187,17 @@ describe('CallController', () => {
         to: new Date('2025-12-31'),
         status: CallStatus.COMPLETED,
       };
-      const csvData = 'call_sid,from_number,to_number,status,duration\nCA123,+1234567890,+0987654321,completed,120';
-      
+      const csvData =
+        'call_sid,from_number,to_number,status,duration\nCA123,+1234567890,+0987654321,completed,120';
+
       callsService.exportCalls.mockResolvedValue(csvData);
       const result = await callController.exportCalls(mockUser, exportCallDto);
 
       expect(result).toBeInstanceOf(StreamableFile);
-      expect(callsService.exportCalls).toHaveBeenCalledWith(mockUser.user_id, exportCallDto);
+      expect(callsService.exportCalls).toHaveBeenCalledWith(
+        mockUser.user_id,
+        exportCallDto,
+      );
     });
 
     it('should handle empty export data', async () => {
@@ -193,14 +206,16 @@ describe('CallController', () => {
         to: new Date('2025-01-01'),
       };
       const csvData = 'call_sid,from_number,to_number,status,duration\n';
-      
+
       callsService.exportCalls.mockResolvedValue(csvData);
 
       const result = await callController.exportCalls(mockUser, exportCallDto);
       expect(result).toBeInstanceOf(StreamableFile);
-      expect(callsService.exportCalls).toHaveBeenCalledWith(mockUser.user_id, exportCallDto);
+      expect(callsService.exportCalls).toHaveBeenCalledWith(
+        mockUser.user_id,
+        exportCallDto,
+      );
     });
-
   });
 
   describe('getAnalytics', () => {
@@ -213,20 +228,26 @@ describe('CallController', () => {
       };
       const analyticsData = {
         total_calls: 100,
-        avg_duration:10,
-        success_rate:80,
+        avg_duration: 10,
+        success_rate: 80,
         status_distribution: [
           { status: 'completed', count: 80 },
           { status: 'failed', count: 20 },
         ],
       };
-      
+
       callsService.getAnalytics.mockResolvedValue(analyticsData);
 
-      const result = await callController.getAnalytics(mockUser, getCallLogsDto);
+      const result = await callController.getAnalytics(
+        mockUser,
+        getCallLogsDto,
+      );
 
       expect(result).toEqual(analyticsData);
-      expect(callsService.getAnalytics).toHaveBeenCalledWith(mockUser.user_id, getCallLogsDto);
+      expect(callsService.getAnalytics).toHaveBeenCalledWith(
+        mockUser.user_id,
+        getCallLogsDto,
+      );
     });
   });
 
@@ -237,12 +258,15 @@ describe('CallController', () => {
 
     it('should return observable stream for valid token', (done) => {
       const token = 'valid.jwt.token';
-      
+
       jwtService.verify.mockReturnValue(mockJwtPayload);
       firebaseService.listen.mockImplementation((path, callback) => {
         // Simulate Firebase callback
         setTimeout(() => {
-          callback({ key: 'CA123456', val: () => ({ status: 'completed' }) } as any, 'child_added');
+          callback(
+            { key: 'CA123456', val: () => ({ status: 'completed' }) } as any,
+            'child_added',
+          );
         }, 10);
         return jest.fn(); // Return cleanup function
       });
@@ -250,8 +274,10 @@ describe('CallController', () => {
       const result = callController.streamCalls(token);
 
       expect(result).toBeInstanceOf(Observable);
-      expect(jwtService.verify).toHaveBeenCalledWith(token, { secret: 'jwt-secret' });
-      
+      expect(jwtService.verify).toHaveBeenCalledWith(token, {
+        secret: 'jwt-secret',
+      });
+
       // Subscribe to the observable to trigger Firebase listen
       result.subscribe(() => {
         expect(firebaseService.listen).toHaveBeenCalledWith(
@@ -265,13 +291,17 @@ describe('CallController', () => {
     it('should throw UnauthorizedException for invalid token', () => {
       // Arrange
       const token = 'invalid.jwt.token';
-      
+
       jwtService.verify.mockImplementation(() => {
         throw new Error('Invalid token');
       });
 
-      expect(() => callController.streamCalls(token)).toThrow(UnauthorizedException);
-      expect(() => callController.streamCalls(token)).toThrow('Invalid or expired token: Invalid token');
+      expect(() => callController.streamCalls(token)).toThrow(
+        UnauthorizedException,
+      );
+      expect(() => callController.streamCalls(token)).toThrow(
+        'Invalid or expired token: Invalid token',
+      );
     });
   });
 
@@ -282,7 +312,7 @@ describe('CallController', () => {
       const expectedNotes = {
         notes: 'Test notes',
       };
-      
+
       callsService.getCallNotes.mockResolvedValue(expectedNotes);
 
       // Act
@@ -290,9 +320,11 @@ describe('CallController', () => {
 
       // Assert
       expect(result).toEqual(expectedNotes);
-      expect(callsService.getCallNotes).toHaveBeenCalledWith(callSid, mockUser.user_id);
+      expect(callsService.getCallNotes).toHaveBeenCalledWith(
+        callSid,
+        mockUser.user_id,
+      );
     });
-
   });
 
   describe('updateCallNotes', () => {
@@ -301,7 +333,7 @@ describe('CallController', () => {
       const id = 'CA123456789';
       const notes = 'Updated notes';
       const expectedResult = { updated: true, message: 'Notes updated' };
-      
+
       callsService.updateCallNotes.mockResolvedValue(expectedResult);
 
       const result = await callController.updateCallNotes(mockUser, id, notes);
@@ -319,7 +351,7 @@ describe('CallController', () => {
     it('should delete call notes successfully', async () => {
       const id = 'CA123456789';
       const expectedResult = { updated: true, message: 'Notes deleted' };
-      
+
       callsService.deleteCallNotes.mockResolvedValue(expectedResult);
 
       const result = await callController.deleteCallNotes(id);

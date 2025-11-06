@@ -53,9 +53,7 @@ describe('UsersService', () => {
       expect(clickhouseService.getUserById).toHaveBeenCalledWith(userId);
       expect(clickhouseService.getUserById).toHaveBeenCalledTimes(1);
     });
-
   });
-
 
   describe('getUserByUsername', () => {
     it('should return user by username successfully', async () => {
@@ -65,7 +63,9 @@ describe('UsersService', () => {
       const result = await usersService.getUserByUsername(username);
 
       expect(result).toEqual(mockUser);
-      expect(clickhouseService.getUserByUsername).toHaveBeenCalledWith(username);
+      expect(clickhouseService.getUserByUsername).toHaveBeenCalledWith(
+        username,
+      );
       expect(clickhouseService.getUserByUsername).toHaveBeenCalledTimes(1);
     });
   });
@@ -77,7 +77,7 @@ describe('UsersService', () => {
         password: 'password123',
       };
       const expectedResponse = { message: 'User created successfully' };
-      
+
       clickhouseService.createUser.mockResolvedValue(expectedResponse);
 
       const result = await usersService.createUser(createUserDto);
@@ -91,43 +91,57 @@ describe('UsersService', () => {
     });
 
     it('should handle duplicate username', async () => {
-
       const createUserDto: CreateUserDto = {
         username: 'existinguser',
         password: 'password123',
       };
-      
-      clickhouseService.createUser.mockRejectedValue(new Error('Username already exists'));
 
-      await expect(usersService.createUser(createUserDto)).rejects.toThrow('Username already exists');
+      clickhouseService.createUser.mockRejectedValue(
+        new Error('Username already exists'),
+      );
+
+      await expect(usersService.createUser(createUserDto)).rejects.toThrow(
+        'Username already exists',
+      );
     });
-
   });
 
   describe('validateUserPassword', () => {
     it('should validate correct password successfully', async () => {
       const username = 'testuser';
       const password = 'correctpassword';
-      
+
       clickhouseService.validateUserPassword.mockResolvedValue(true);
 
-      const result = await usersService.validateUserPassword(username, password);
+      const result = await usersService.validateUserPassword(
+        username,
+        password,
+      );
 
       expect(result).toBe(true);
-      expect(clickhouseService.validateUserPassword).toHaveBeenCalledWith(username, password);
+      expect(clickhouseService.validateUserPassword).toHaveBeenCalledWith(
+        username,
+        password,
+      );
       expect(clickhouseService.validateUserPassword).toHaveBeenCalledTimes(1);
     });
 
     it('should reject incorrect password', async () => {
       const username = 'testuser';
       const password = 'wrongpassword';
-      
+
       clickhouseService.validateUserPassword.mockResolvedValue(false);
 
-      const result = await usersService.validateUserPassword(username, password);
+      const result = await usersService.validateUserPassword(
+        username,
+        password,
+      );
 
       expect(result).toBe(false);
-      expect(clickhouseService.validateUserPassword).toHaveBeenCalledWith(username, password);
+      expect(clickhouseService.validateUserPassword).toHaveBeenCalledWith(
+        username,
+        password,
+      );
     });
   });
 });

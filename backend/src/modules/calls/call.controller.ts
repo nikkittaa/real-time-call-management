@@ -25,9 +25,9 @@ import { ConfigService } from '@nestjs/config';
 import { JwtPayload } from 'src/common/interfaces/jwt-payload.interface';
 import { ExportCallDto } from './dto/export-call.dto';
 import { Readable } from 'stream';
-import type { CallDataFirebase } from 'src/common/interfaces/calldata-firebase.interface';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import { CallDataFirebase } from 'src/common/interfaces/calldata-firebase.interface';
 
 @Controller('calls')
 export class CallController {
@@ -37,7 +37,7 @@ export class CallController {
     private readonly firebaseService: FirebaseService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly parentLogger: Logger
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly parentLogger: Logger,
   ) {
     this.logger = this.parentLogger.child({ context: 'CallController' });
   }
@@ -103,12 +103,14 @@ export class CallController {
       this.firebaseService.listen(`calls/${userId}`, (snapshot, eventType) => {
         this.logger.info(`Streamed call data for user: ${userId}`);
         subscriber.next({
-          data: JSON.stringify({ event: eventType, callSid: snapshot.key, call: snapshot.val()}),
+          data: JSON.stringify({
+            event: eventType,
+            callSid: snapshot.key,
+            call: snapshot.val() as CallDataFirebase,
+          }),
         } as MessageEvent);
       });
     });
-
-  
   }
 
   @Get('/:callSid/notes')

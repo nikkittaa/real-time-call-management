@@ -47,7 +47,7 @@ describe('AuthController', () => {
         password: 'password123',
       };
       const expectedResult = { accessToken: 'signed.jwt.token' };
-      
+
       authService.signIn.mockResolvedValue(expectedResult);
 
       // Act
@@ -65,22 +65,27 @@ describe('AuthController', () => {
         username: 'testuser',
         password: 'wrongpassword',
       };
-      
-      authService.signIn.mockRejectedValue(new UnauthorizedException('Invalid credentials'));
+
+      authService.signIn.mockRejectedValue(
+        new UnauthorizedException('Invalid credentials'),
+      );
 
       // Act & Assert
-      await expect(authController.signIn(signInDto)).rejects.toThrow(UnauthorizedException);
-      await expect(authController.signIn(signInDto)).rejects.toThrow('Invalid credentials');
+      await expect(authController.signIn(signInDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      await expect(authController.signIn(signInDto)).rejects.toThrow(
+        'Invalid credentials',
+      );
       expect(authService.signIn).toHaveBeenCalledWith(signInDto);
     });
-
   });
 
   describe('validateToken', () => {
     it('should return JWT payload on valid token', async () => {
       // Arrange
       const token = 'valid.jwt.token';
-      
+
       authService.validateToken.mockResolvedValue(mockJwtPayload);
 
       // Act
@@ -95,7 +100,7 @@ describe('AuthController', () => {
     it('should throw UnauthorizedException on invalid token', async () => {
       // Arrange
       const token = 'invalid.jwt.token';
-      
+
       authService.validateToken.mockRejectedValue(
         new UnauthorizedException('Invalid or expired token'),
       );

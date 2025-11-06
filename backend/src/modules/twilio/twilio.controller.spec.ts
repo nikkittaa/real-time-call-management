@@ -127,7 +127,7 @@ describe('TwilioController', () => {
   describe('makeCall', () => {
     it('should initiate call successfully', async () => {
       const to = '+0987654321';
-      
+
       twilioService.makeCall.mockResolvedValue(mockCall as any);
 
       const result = await twilioController.makeCall(to, mockUser);
@@ -142,8 +142,6 @@ describe('TwilioController', () => {
       expect(twilioService.makeCall).toHaveBeenCalledWith(to, mockUser.user_id);
       expect(twilioService.makeCall).toHaveBeenCalledTimes(1);
     });
-
-
   });
 
   describe('handleEvent', () => {
@@ -181,7 +179,7 @@ describe('TwilioController', () => {
     it('should process call event successfully', async () => {
       // Arrange
       const userData = { user_id: mockUser.user_id };
-      
+
       firebaseService.read.mockResolvedValue({ val: () => userData } as any);
       firebaseService.write.mockResolvedValue(undefined);
       firebaseService.delete.mockResolvedValue(undefined);
@@ -190,10 +188,11 @@ describe('TwilioController', () => {
       twilioService.fetchSummary.mockResolvedValue(mockCallSummary);
       clickhouseService.insertCallDebugInfo.mockResolvedValue(undefined);
 
-    
       await twilioController.handleEvent(mockCallEvent);
 
-      expect(firebaseService.read).toHaveBeenCalledWith(`calls/${mockCallEvent.CallSid}`);
+      expect(firebaseService.read).toHaveBeenCalledWith(
+        `calls/${mockCallEvent.CallSid}`,
+      );
       expect(firebaseService.write).toHaveBeenCalledWith(
         `calls/${userData.user_id}/${mockCallEvent.CallSid}`,
         {
@@ -202,15 +201,20 @@ describe('TwilioController', () => {
           to_number: mockCallEvent.To,
         },
       );
-      expect(twilioService.fetchFullCallLog).toHaveBeenCalledWith(mockCallEvent.CallSid);
+      expect(twilioService.fetchFullCallLog).toHaveBeenCalledWith(
+        mockCallEvent.CallSid,
+      );
       expect(clickhouseService.insertCallLog).toHaveBeenCalled();
     });
 
     it('should handle events for different call statuses', async () => {
       // Arrange
-      const initiatedEvent = { ...mockCallEvent, CallStatus: 'initiated' as any };
+      const initiatedEvent = {
+        ...mockCallEvent,
+        CallStatus: 'initiated' as any,
+      };
       const userData = { user_id: mockUser.user_id };
-      
+
       firebaseService.read.mockResolvedValue({ val: () => userData } as any);
       firebaseService.write.mockResolvedValue(undefined);
 
@@ -227,7 +231,6 @@ describe('TwilioController', () => {
       // Should not insert call log for non-final status
       expect(clickhouseService.insertCallLog).not.toHaveBeenCalled();
     });
-
   });
 
   describe('handleRecordingEvent', () => {
@@ -240,7 +243,8 @@ describe('TwilioController', () => {
     it('should handle recording event successfully', async () => {
       clickhouseService.updateRecordingInfo.mockResolvedValue(undefined);
 
-      const result = await twilioController.handleRecordingEvent(mockRecordingEvent);
+      const result =
+        await twilioController.handleRecordingEvent(mockRecordingEvent);
 
       expect(result).toBe('OK');
       expect(clickhouseService.updateRecordingInfo).toHaveBeenCalledWith(
@@ -249,14 +253,27 @@ describe('TwilioController', () => {
         mockRecordingEvent.RecordingUrl,
       );
     });
-
   });
 
   describe('getSummary', () => {
     it('should return call summary for valid callSid', async () => {
       const callSid = 'CA123456789';
-      const expectedSummary : CallDebugInfo = { callSid: 'CA123456789', from: '+1234567890', to: '+0987654321', date_created: '2023-01-01 10:00:00', start_time: '2023-01-01 10:00:30', end_time: '2023-01-01 10:02:30', direction: 'outbound-api', duration: 120, status: 'completed', price: -0.05, price_unit: 'USD', recordings: '[]', events: '[]' } ;
-      
+      const expectedSummary: CallDebugInfo = {
+        callSid: 'CA123456789',
+        from: '+1234567890',
+        to: '+0987654321',
+        date_created: '2023-01-01 10:00:00',
+        start_time: '2023-01-01 10:00:30',
+        end_time: '2023-01-01 10:02:30',
+        direction: 'outbound-api',
+        duration: 120,
+        status: 'completed',
+        price: -0.05,
+        price_unit: 'USD',
+        recordings: '[]',
+        events: '[]',
+      };
+
       clickhouseService.fetchSummary.mockResolvedValue(expectedSummary);
 
       const result = await twilioController.getSummary(callSid);

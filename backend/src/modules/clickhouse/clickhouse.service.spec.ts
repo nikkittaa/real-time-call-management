@@ -50,7 +50,7 @@ describe('ClickhouseService', () => {
     updatedAt: new Date('2025-01-01'),
   };
 
-  const mockCallLog : CallLog = {
+  const mockCallLog: CallLog = {
     call_sid: 'CA123456789',
     from_number: '+1234567890',
     to_number: '+0987654321',
@@ -127,17 +127,21 @@ describe('ClickhouseService', () => {
         values: [callData],
         format: 'JSONEachRow',
       });
-      expect(mockLogger.info).toHaveBeenCalledWith(`Inserted call log for callSid: ${callData.call_sid}`);
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        `Inserted call log!`,
+      );
     });
 
     it('should handle insertion errors', async () => {
       const callData = mockCallLog;
-      mockClickhouseClient.insert.mockRejectedValue(new Error('ClickHouse insertion failed'));
+      mockClickhouseClient.insert.mockRejectedValue(
+        new Error('ClickHouse insertion failed'),
+      );
 
-      await expect(clickhouseService.insertCallLog(callData)).rejects.toThrow('ClickHouse insertion failed');
+      await expect(clickhouseService.insertCallLog(callData)).rejects.toThrow(
+        'Clickhouse insertion failed',
+      );
     });
-
-  
   });
 
   describe('getUserById', () => {
@@ -157,10 +161,10 @@ describe('ClickhouseService', () => {
     it('should create user successfully', async () => {
       const username = 'newuser';
       const password = 'password123';
-      
+
       // Mock the existing user check query - return empty data (no existing user)
       const mockExistingUserResult = {
-        json: jest.fn().mockResolvedValue({ data: [] })
+        json: jest.fn().mockResolvedValue({ data: [] }),
       };
       mockClickhouseClient.query.mockResolvedValueOnce(mockExistingUserResult);
       mockClickhouseClient.insert.mockResolvedValue(undefined);
@@ -178,35 +182,42 @@ describe('ClickhouseService', () => {
     it('should handle duplicate username error', async () => {
       const username = 'existinguser';
       const password = 'password123';
-      
+
       const mockExistingUserResult = {
-        json: jest.fn().mockResolvedValue({ data: [{ username: 'existinguser' }] })
+        json: jest
+          .fn()
+          .mockResolvedValue({ data: [{ username: 'existinguser' }] }),
       };
       mockClickhouseClient.query.mockResolvedValue(mockExistingUserResult);
 
-      await expect(clickhouseService.createUser(username, password)).rejects.toThrow(ConflictException);
-      await expect(clickhouseService.createUser(username, password)).rejects.toThrow('Username already exists');
+      await expect(
+        clickhouseService.createUser(username, password),
+      ).rejects.toThrow(ConflictException);
+      await expect(
+        clickhouseService.createUser(username, password),
+      ).rejects.toThrow('Username already exists');
     });
-
-  
   });
 
   describe('validateUserPassword', () => {
     it('should validate correct password successfully', async () => {
       const username = 'testuser';
       const password = 'password123';
-      
+
       // Mock getUserByUsername to return user with password
       jest.spyOn(clickhouseService, 'getUserByUsername').mockResolvedValue({
         ...mockUser,
-        password: '$2b$10$hashedpassword'
+        password: '$2b$10$hashedpassword',
       });
 
       // Mock bcrypt module
       const bcrypt = require('bcrypt');
       bcrypt.compare = jest.fn().mockResolvedValue(true);
 
-      const result = await clickhouseService.validateUserPassword(username, password);
+      const result = await clickhouseService.validateUserPassword(
+        username,
+        password,
+      );
 
       expect(result).toBe(true);
     });
@@ -215,38 +226,22 @@ describe('ClickhouseService', () => {
       // Arrange
       const username = 'testuser';
       const password = 'wrongpassword';
-      
+
       jest.spyOn(clickhouseService, 'getUserByUsername').mockResolvedValue({
         ...mockUser,
-        password: '$2b$10$hashedpassword'
+        password: '$2b$10$hashedpassword',
       });
 
       const bcrypt = require('bcrypt');
       bcrypt.compare = jest.fn().mockResolvedValue(false);
 
-      const result = await clickhouseService.validateUserPassword(username, password);
+      const result = await clickhouseService.validateUserPassword(
+        username,
+        password,
+      );
 
       expect(result).toBe(false);
     });
-
-  });
-
-  describe('getUserCallLogs', () => {
-    it('should return paginated call logs', async () => {
-      const userId = '123';
-      const page = 1;
-      const limit = 10;
-      const mockLogs = [mockCallLog];
-      
-      mockQueryResult.json.mockResolvedValue(mockLogs);
-      mockClickhouseClient.query.mockResolvedValue(mockQueryResult);
-
-      const result = await clickhouseService.getUserCallLogs(userId, page, limit);
-
-      expect(result).toEqual({ data: mockLogs });
-      expect(mockClickhouseClient.query).toHaveBeenCalled();
-    });
-
   });
 
   describe('updateCallNotes', () => {
@@ -256,15 +251,21 @@ describe('ClickhouseService', () => {
         user_id: '123',
         notes: 'Test notes',
       };
-      
-      jest.spyOn(clickhouseService, 'getCallLog').mockResolvedValue(mockCallLog as any);
-      jest.spyOn(clickhouseService, 'insertCallLog').mockResolvedValue(undefined);
+
+      jest
+        .spyOn(clickhouseService, 'getCallLog')
+        .mockResolvedValue(mockCallLog as any);
+      jest
+        .spyOn(clickhouseService, 'insertCallLog')
+        .mockResolvedValue(undefined);
 
       const result = await clickhouseService.updateCallNotes(createNotesDto);
 
-      expect(result).toEqual({ updated: true, message: 'Note updated successfully' });
+      expect(result).toEqual({
+        updated: true,
+        message: 'Note updated successfully',
+      });
     });
-
   });
 
   describe('getFilteredCalls', () => {
@@ -280,16 +281,18 @@ describe('ClickhouseService', () => {
         status: CallStatus.COMPLETED,
       };
       const mockFilteredLogs = [mockCallLog];
-      
+
       mockQueryResult.json.mockResolvedValue(mockFilteredLogs);
       mockClickhouseClient.query.mockResolvedValue(mockQueryResult);
 
-      const result = await clickhouseService.getFilteredCalls(userId, getCallLogsDto);
+      const result = await clickhouseService.getFilteredCalls(
+        userId,
+        getCallLogsDto,
+      );
 
       expect(result).toEqual({ data: mockFilteredLogs });
       expect(mockClickhouseClient.query).toHaveBeenCalled();
     });
-
   });
 
   describe('exportCalls', () => {
@@ -300,7 +303,7 @@ describe('ClickhouseService', () => {
         to: new Date('2023-12-31'),
       };
       const mockResults = [mockCallLog];
-      
+
       mockQueryResult.json.mockResolvedValue(mockResults);
       mockClickhouseClient.query.mockResolvedValue(mockQueryResult);
 
@@ -329,7 +332,7 @@ describe('ClickhouseService', () => {
         recordings: '[]',
         events: '[]',
       };
-      
+
       mockClickhouseClient.insert.mockResolvedValue(undefined);
 
       await clickhouseService.insertCallDebugInfo(debugInfo);
@@ -339,7 +342,9 @@ describe('ClickhouseService', () => {
         values: [debugInfo],
         format: 'JSONEachRow',
       });
-      expect(mockLogger.info).toHaveBeenCalledWith(`Inserted call debug info for callSid: ${debugInfo.callSid}`);
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        `Inserted call debug info for callSid: ${debugInfo.callSid}`,
+      );
     });
   });
 });

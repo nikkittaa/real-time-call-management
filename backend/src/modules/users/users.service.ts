@@ -10,7 +10,7 @@ export class UsersService {
   async getUserById(id: string): Promise<User> {
     return this.clickhouseService.getUserById(id);
   }
-  
+
   async getUserByUsername(username: string): Promise<User> {
     return this.clickhouseService.getUserByUsername(username);
   }

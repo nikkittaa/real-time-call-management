@@ -1,4 +1,10 @@
-import { ConflictException, Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ClickHouseClient, createClient } from '@clickhouse/client';
 import { formatDateForClickHouse } from 'src/utils/formatDatefoClickhouse';
 import * as bcrypt from 'bcrypt';
@@ -17,7 +23,10 @@ export class ClickhouseService implements OnModuleInit {
   private client: ClickHouseClient;
   private readonly logger: Logger;
 
-  constructor(private configService: ConfigService, @Inject(WINSTON_MODULE_PROVIDER) private readonly parentLogger: Logger) {
+  constructor(
+    private configService: ConfigService,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly parentLogger: Logger,
+  ) {
     this.configService = configService;
     this.logger = this.parentLogger.child({ context: 'Clickhouse' });
   }
@@ -32,12 +41,19 @@ export class ClickhouseService implements OnModuleInit {
   }
 
   async insertCallLog(callData: any) {
-    await this.client.insert({
-      table: 'call_logs',
-      values: [callData],
-      format: 'JSONEachRow',
-    });
-    this.logger.info(`Inserted call log for callSid: ${callData.call_sid}`);
+    try {
+      await this.client.insert({
+        table: 'call_logs',
+        values: [callData],
+        format: 'JSONEachRow',
+      });
+
+      this.logger.info(`Inserted call log!`);
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`Failed to insert call log. Error: ${err.message}`);
+      throw new InternalServerErrorException('Clickhouse insertion failed');
+    }
   }
 
   async getCallLog(callSid: string) {
@@ -65,36 +81,6 @@ export class ClickhouseService implements OnModuleInit {
 
     const result: CallLog[] = await resultSet.json();
     return result[0];
-  }
-
-  async getUserCallLogs(userId: string, page: number, limit: number) {
-    const offset = (page - 1) * limit;
-    const query = `
-      SELECT 
-        call_sid, 
-        argMax(from_number, created_at) as from_number, 
-        argMax(to_number, created_at) as to_number, 
-        argMax(status,  created_at) as status,
-        argMax(duration, created_at) as duration,
-        argMax(start_time, created_at) as start_time,
-        argMax(end_time, created_at) as end_time ,
-        argMax(notes, created_at) as notes,
-        argMax(recording_sid, created_at) as recording_sid,
-        argMax(recording_url, created_at) as recording_url
-      FROM call_logs
-      WHERE user_id = '${userId}' 
-      GROUP BY call_sid
-      ORDER BY start_time DESC
-      LIMIT ${limit} OFFSET ${offset}
-    `;
-
-    const resultSet = await this.client.query({
-      query,
-      format: 'JSONEachRow',
-    });
-
-    const result: CallLog[] = await resultSet.json();
-    return { data: result };
   }
 
   async getFilteredCalls(userId: string, getCallLogsDto: GetCallLogsDto) {
@@ -146,10 +132,21 @@ export class ClickhouseService implements OnModuleInit {
       LIMIT ${limit} OFFSET ${offset}
     `;
 
-    const resultSet = await this.client.query({ query, format: 'JSONEachRow' });
-    const result: CallLog[] = await resultSet.json();
-    this.logger.info(`Filtered calls for user: ${userId} - ${result.length} calls found`);
-    return { data: result };
+    try {
+      const resultSet = await this.client.query({
+        query,
+        format: 'JSONEachRow',
+      });
+      const result: CallLog[] = await resultSet.json();
+      this.logger.info(
+        `Filtered calls for user: ${userId} - ${result.length} calls found`,
+      );
+      return { data: result };
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`Failed to get filtered calls. Error: ${err.message}`);
+      throw new InternalServerErrorException('Failed to get filtered calls');
+    }
   }
 
   async updateRecordingInfo(
@@ -210,23 +207,31 @@ export class ClickhouseService implements OnModuleInit {
       ORDER BY argMax(start_time, created_at) as start_time DESC
     `;
 
-    const resultSet = await this.client.query({
-      query: query,
-      format: 'JSONEachRow',
-    });
+    try {
+      const resultSet = await this.client.query({
+        query: query,
+        format: 'JSONEachRow',
+      });
 
-    const result: CallLog[] = await resultSet.json();
-    this.logger.info(`Exported calls for user: ${userId} - ${result.length} calls found`);
-    const csv = [
-      Object.keys(result[0]).join(','), // header
-      ...result.map((row) =>
-        Object.values(row)
-          .map((v) => `"${String(v).replace(/"/g, '""')}"`) // escape quotes
-          .join(','),
-      ),
-    ].join('\n');
+      const result: CallLog[] = await resultSet.json();
+      this.logger.info(
+        `Exported calls for user: ${userId} - ${result.length} calls found`,
+      );
+      const csv = [
+        Object.keys(result[0]).join(','), // header
+        ...result.map((row) =>
+          Object.values(row)
+            .map((v) => `"${String(v).replace(/"/g, '""')}"`) // escape quotes
+            .join(','),
+        ),
+      ].join('\n');
 
-    return csv;
+      return csv;
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`Failed to export calls. Error: ${err.message}`);
+      throw new InternalServerErrorException('Failed to export calls');
+    }
   }
 
   async getAnalytics(userId: string, getCallLogsDto: GetCallLogsDto) {
@@ -267,7 +272,7 @@ export class ClickhouseService implements OnModuleInit {
       GROUP BY call_sid
        ${whereClause}
     `;
-    //console.log("here", baseSubquery);
+
     // Totals: total calls, avg duration, success rate
     const totalsQuery = `
       SELECT
@@ -316,12 +321,24 @@ export class ClickhouseService implements OnModuleInit {
   }
 
   async insertCallDebugInfo(callDebugInfo: CallDebugInfo) {
-    await this.client.insert({
-      table: 'calls',
-      values: [callDebugInfo],
-      format: 'JSONEachRow',
-    });
-    this.logger.info(`Inserted call debug info for callSid: ${callDebugInfo.callSid}`);
+    try {
+      await this.client.insert({
+        table: 'calls',
+        values: [callDebugInfo],
+        format: 'JSONEachRow',
+      });
+      this.logger.info(
+        `Inserted call debug info for callSid: ${callDebugInfo.callSid}`,
+      );
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(
+        `Failed to insert call debug info. Error: ${err.message}`,
+      );
+      throw new InternalServerErrorException(
+        'Failed to insert call debug info',
+      );
+    }
   }
 
   async fetchSummary(callSid: string) {
@@ -395,7 +412,6 @@ GROUP BY call_sid`;
     const rows: User[] = await resultSet.json();
     return rows[0];
   }
-
 
   async createUser(username: string, password: string) {
     try {

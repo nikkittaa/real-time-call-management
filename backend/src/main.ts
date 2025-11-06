@@ -3,13 +3,14 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
   });
   app.enableCors();
-  const logger = app.get(WINSTON_MODULE_PROVIDER);
+  const logger = app.get<Logger>(WINSTON_MODULE_PROVIDER);
   app.useLogger(logger);
 
   app.useGlobalFilters(new GlobalExceptionFilter(logger));
@@ -22,7 +23,7 @@ async function bootstrap() {
       },
     }),
   );
-  
+
   await app.listen(3002);
   logger.info('Application is running on port 3002');
 }

@@ -74,26 +74,26 @@ describe('AuthService', () => {
     it('should return user when credentials are valid', async () => {
       const username = 'testuser';
       const password = 'password123';
-      
+
       usersService.validateUserPassword.mockResolvedValue(true);
       usersService.getUserByUsername.mockResolvedValue(mockUser);
 
-     
       const result = await authService.validateUser(username, password);
 
-      
       expect(result).toEqual(mockUser);
-      expect(usersService.validateUserPassword).toHaveBeenCalledWith(username, password);
+      expect(usersService.validateUserPassword).toHaveBeenCalledWith(
+        username,
+        password,
+      );
       expect(usersService.getUserByUsername).toHaveBeenCalledWith(username);
     });
   });
 
   describe('validateToken', () => {
     it('should return payload when token is valid', async () => {
-      
       const token = 'valid.jwt.token';
       const jwtSecret = 'secret';
-      
+
       configService.get.mockReturnValue(jwtSecret);
       jwtService.verify.mockReturnValue(mockJwtPayload);
 
@@ -101,19 +101,20 @@ describe('AuthService', () => {
 
       expect(result).toEqual(mockJwtPayload);
       expect(configService.get).toHaveBeenCalledWith('JWT_SECRET');
-      expect(jwtService.verify).toHaveBeenCalledWith(token, { secret: jwtSecret });
+      expect(jwtService.verify).toHaveBeenCalledWith(token, {
+        secret: jwtSecret,
+      });
     });
 
     it('should throw UnauthorizedException when token is invalid', async () => {
       const token = 'invalid.jwt.token';
       const jwtSecret = 'secret';
-      
+
       configService.get.mockReturnValue(jwtSecret);
       jwtService.verify.mockImplementation(() => {
         throw new Error('Invalid token');
       });
 
-      
       await expect(authService.validateToken(token)).rejects.toThrow(
         UnauthorizedException,
       );
@@ -130,20 +131,21 @@ describe('AuthService', () => {
         password: 'password123',
       };
       const accessToken = 'signed.jwt.token';
-      
+
       usersService.validateUserPassword.mockResolvedValue(true);
       usersService.getUserByUsername.mockResolvedValue(mockUser);
       jwtService.sign.mockReturnValue(accessToken);
 
       const result = await authService.signIn(signInDto);
 
-    
       expect(result).toEqual({ accessToken });
       expect(usersService.validateUserPassword).toHaveBeenCalledWith(
         signInDto.username,
         signInDto.password,
       );
-      expect(usersService.getUserByUsername).toHaveBeenCalledWith(signInDto.username);
+      expect(usersService.getUserByUsername).toHaveBeenCalledWith(
+        signInDto.username,
+      );
       expect(jwtService.sign).toHaveBeenCalledWith(mockJwtPayload);
     });
 
@@ -152,7 +154,7 @@ describe('AuthService', () => {
         username: 'testuser',
         password: 'wrongpassword',
       };
-      
+
       usersService.validateUserPassword.mockResolvedValue(false);
 
       // Act & Assert
@@ -164,6 +166,5 @@ describe('AuthService', () => {
       );
       expect(jwtService.sign).not.toHaveBeenCalled();
     });
-
   });
 });

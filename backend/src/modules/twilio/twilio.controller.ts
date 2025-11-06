@@ -93,14 +93,20 @@ export class TwilioController {
       await this.firebaseService.delete(`calls/${userId}/${body.CallSid}`);
       await this.firebaseService.delete(`calls/${body.CallSid}`);
 
-      setTimeout(async () => {
-        try {
-          const callSummary = await this.twilioService.fetchSummary(body.CallSid);
-          await this.clickhouseService.insertCallDebugInfo(callSummary);
-          this.logger.info(`Call summary inserted for callSid: ${body.CallSid}`);
-        } catch (error) {
-          this.logger.error(`Failed to fetch or insert call summary `, error);
-        }
+      setTimeout(() => {
+        void (async () => {
+          try {
+            const callSummary = await this.twilioService.fetchSummary(
+              body.CallSid,
+            );
+            await this.clickhouseService.insertCallDebugInfo(callSummary);
+            this.logger.info(
+              `Call summary inserted for callSid: ${body.CallSid}`,
+            );
+          } catch (error) {
+            this.logger.error(`Failed to fetch or insert call summary `, error);
+          }
+        })();
       }, 10000);
     }
   }
@@ -119,7 +125,7 @@ export class TwilioController {
   @Get('summary')
   @UseGuards(AuthGuard('jwt'))
   async getSummary(@Query('callSid') callSid: string) {
-    if(!callSid) {
+    if (!callSid) {
       return 'CallSid is required';
     }
 

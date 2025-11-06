@@ -68,23 +68,6 @@ describe('CallsService', () => {
     jest.clearAllMocks();
   });
 
-  describe('getCalls', () => {
-    it('should return paginated call logs', async () => {
-      const page = 1;
-      const limit = 10;
-      const expectedCalls = [mockCallLog];
-      
-      clickhouseService.getUserCallLogs.mockResolvedValue({ data: expectedCalls });
-
-      const result = await callsService.getCalls(mockUserId, page, limit);
-
-      expect(result).toEqual({data: expectedCalls});
-      expect(clickhouseService.getUserCallLogs).toHaveBeenCalledWith(mockUserId, page, limit);
-      expect(clickhouseService.getUserCallLogs).toHaveBeenCalledTimes(1);
-    });
-
-  });
-
   describe('getCallNotes', () => {
     it('should return call notes for valid call and user', async () => {
       clickhouseService.getCallNotes.mockResolvedValue(mockCallNotes);
@@ -92,10 +75,12 @@ describe('CallsService', () => {
       const result = await callsService.getCallNotes(mockCallSid, mockUserId);
 
       expect(result).toEqual(mockCallNotes);
-      expect(clickhouseService.getCallNotes).toHaveBeenCalledWith(mockCallSid, mockUserId);
+      expect(clickhouseService.getCallNotes).toHaveBeenCalledWith(
+        mockCallSid,
+        mockUserId,
+      );
       expect(clickhouseService.getCallNotes).toHaveBeenCalledTimes(1);
     });
-
   });
 
   describe('updateCallNotes', () => {
@@ -106,13 +91,15 @@ describe('CallsService', () => {
         notes: 'Updated notes',
       };
       const expectedResult = { updated: true, message: 'Notes updated' };
-      
+
       clickhouseService.updateCallNotes.mockResolvedValue(expectedResult);
 
       const result = await callsService.updateCallNotes(createNotesDto);
 
       expect(result).toEqual(expectedResult);
-      expect(clickhouseService.updateCallNotes).toHaveBeenCalledWith(createNotesDto);
+      expect(clickhouseService.updateCallNotes).toHaveBeenCalledWith(
+        createNotesDto,
+      );
       expect(clickhouseService.updateCallNotes).toHaveBeenCalledTimes(1);
     });
   });
@@ -120,16 +107,17 @@ describe('CallsService', () => {
   describe('deleteCallNotes', () => {
     it('should delete call notes successfully', async () => {
       const expectedResult = { updated: true, message: 'Notes deleted' };
-      
+
       clickhouseService.deleteCallNotes.mockResolvedValue(expectedResult);
 
       const result = await callsService.deleteCallNotes(mockCallSid);
 
       expect(result).toEqual(expectedResult);
-      expect(clickhouseService.deleteCallNotes).toHaveBeenCalledWith(mockCallSid);
+      expect(clickhouseService.deleteCallNotes).toHaveBeenCalledWith(
+        mockCallSid,
+      );
       expect(clickhouseService.deleteCallNotes).toHaveBeenCalledTimes(1);
     });
-
   });
 
   describe('getFilteredCalls', () => {
@@ -143,13 +131,21 @@ describe('CallsService', () => {
         status: CallStatus.COMPLETED,
       };
       const expectedCalls = [mockCallLog];
-      
-      clickhouseService.getFilteredCalls.mockResolvedValue({ data: expectedCalls });
 
-      const result = await callsService.getFilteredCalls(mockUserId, getCallLogsDto);
+      clickhouseService.getFilteredCalls.mockResolvedValue({
+        data: expectedCalls,
+      });
 
-      expect(result).toEqual({data:expectedCalls});
-      expect(clickhouseService.getFilteredCalls).toHaveBeenCalledWith(mockUserId, getCallLogsDto);
+      const result = await callsService.getFilteredCalls(
+        mockUserId,
+        getCallLogsDto,
+      );
+
+      expect(result).toEqual({ data: expectedCalls });
+      expect(clickhouseService.getFilteredCalls).toHaveBeenCalledWith(
+        mockUserId,
+        getCallLogsDto,
+      );
       expect(clickhouseService.getFilteredCalls).toHaveBeenCalledTimes(1);
     });
 
@@ -159,35 +155,44 @@ describe('CallsService', () => {
         limit: 10,
       };
       const expectedCalls = [mockCallLog];
-      
-      clickhouseService.getFilteredCalls.mockResolvedValue({ data: expectedCalls });
 
-      const result = await callsService.getFilteredCalls(mockUserId, getCallLogsDto);
+      clickhouseService.getFilteredCalls.mockResolvedValue({
+        data: expectedCalls,
+      });
 
-      expect(result).toEqual({data:expectedCalls});
-      expect(clickhouseService.getFilteredCalls).toHaveBeenCalledWith(mockUserId, getCallLogsDto);
+      const result = await callsService.getFilteredCalls(
+        mockUserId,
+        getCallLogsDto,
+      );
+
+      expect(result).toEqual({ data: expectedCalls });
+      expect(clickhouseService.getFilteredCalls).toHaveBeenCalledWith(
+        mockUserId,
+        getCallLogsDto,
+      );
     });
-
   });
 
   describe('exportCalls', () => {
     it('should export calls as CSV', async () => {
-
       const exportCallDto: ExportCallDto = {
         from: new Date('2023-01-01'),
         to: new Date('2023-12-31'),
         status: CallStatus.COMPLETED,
       };
-      const expectedCsvData = 'call_sid,from_number,to_number,status,duration\nCA123,+1234567890,+0987654321,completed,120';
-      
+      const expectedCsvData =
+        'call_sid,from_number,to_number,status,duration\nCA123,+1234567890,+0987654321,completed,120';
+
       clickhouseService.exportCalls.mockResolvedValue(expectedCsvData);
       const result = await callsService.exportCalls(mockUserId, exportCallDto);
 
       expect(result).toEqual(expectedCsvData);
-      expect(clickhouseService.exportCalls).toHaveBeenCalledWith(mockUserId, exportCallDto);
+      expect(clickhouseService.exportCalls).toHaveBeenCalledWith(
+        mockUserId,
+        exportCallDto,
+      );
       expect(clickhouseService.exportCalls).toHaveBeenCalledTimes(1);
     });
-
   });
 
   describe('getAnalytics', () => {
@@ -198,15 +203,20 @@ describe('CallsService', () => {
         from: new Date('2023-01-01'),
         to: new Date('2023-12-31'),
       };
-      
+
       clickhouseService.getAnalytics.mockResolvedValue(mockAnalytics);
 
-      const result = await callsService.getAnalytics(mockUserId, getCallLogsDto);
+      const result = await callsService.getAnalytics(
+        mockUserId,
+        getCallLogsDto,
+      );
 
       expect(result).toEqual(mockAnalytics);
-      expect(clickhouseService.getAnalytics).toHaveBeenCalledWith(mockUserId, getCallLogsDto);
+      expect(clickhouseService.getAnalytics).toHaveBeenCalledWith(
+        mockUserId,
+        getCallLogsDto,
+      );
       expect(clickhouseService.getAnalytics).toHaveBeenCalledTimes(1);
     });
-
   });
 });

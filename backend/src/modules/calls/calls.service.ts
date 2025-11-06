@@ -8,10 +8,6 @@ import { ExportCallDto } from './dto/export-call.dto';
 export class CallsService {
   constructor(private readonly clickhouseService: ClickhouseService) {}
 
-  async getCalls(userId: string, page: number, limit: number) {
-    return this.clickhouseService.getUserCallLogs(userId, page, limit);
-  }
-
   async getCallNotes(callSid: string, userId: string) {
     return this.clickhouseService.getCallNotes(callSid, userId);
   }

@@ -16,8 +16,6 @@ describe('UsersController', () => {
     updatedAt: new Date('2023-01-01T10:00:00Z'),
   };
 
-  
-
   beforeEach(async () => {
     const mockUsersService = {
       getUserById: jest.fn(),
@@ -55,7 +53,6 @@ describe('UsersController', () => {
       expect(usersService.getUserById).toHaveBeenCalledWith(id);
       expect(usersService.getUserById).toHaveBeenCalledTimes(1);
     });
-
   });
 
   describe('createUser', () => {
@@ -65,7 +62,7 @@ describe('UsersController', () => {
         password: 'password123',
       };
       const expectedResponse = { message: 'User created successfully' };
-      
+
       usersService.createUser.mockResolvedValue(expectedResponse);
       const result = await usersController.createUser(createUserDto);
       expect(result).toEqual(expectedResponse);
@@ -78,9 +75,13 @@ describe('UsersController', () => {
         username: 'existinguser',
         password: 'password123',
       };
-      
-      usersService.createUser.mockRejectedValue(new Error('Username already exists'));
-      await expect(usersController.createUser(createUserDto)).rejects.toThrow('Username already exists');
+
+      usersService.createUser.mockRejectedValue(
+        new Error('Username already exists'),
+      );
+      await expect(usersController.createUser(createUserDto)).rejects.toThrow(
+        'Username already exists',
+      );
     });
   });
 });

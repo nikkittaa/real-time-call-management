@@ -11,10 +11,18 @@ import * as winston from 'winston';
           level: 'info',
           format: winston.format.combine(
             winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-            winston.format.colorize({all: true}),
-            winston.format.printf(({ timestamp, level, message, context }) => {
-              return `[${timestamp}] [${level}]${context ? ' [' + context + ']' : ' App'} ${message}`;
-            }),
+            winston.format.colorize({ all: true }),
+            winston.format.printf(
+              (info: {
+                timestamp: string;
+                level: string;
+                message: string;
+                context?: string;
+              }) => {
+                const { timestamp, level, message, context } = info;
+                return `[${timestamp}] [${level}]${context ? ` [${context}]` : ' App'} ${message}`;
+              },
+            ),
           ),
         }),
       ],
