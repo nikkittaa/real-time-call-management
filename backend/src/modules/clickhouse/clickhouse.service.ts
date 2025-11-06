@@ -396,18 +396,6 @@ GROUP BY call_sid`;
     return rows[0];
   }
 
-  async getAllUsers() {
-    const query = `
-      SELECT * FROM users`;
-
-    const resultSet = await this.client.query({
-      query: query,
-      format: 'JSONEachRow',
-    });
-
-    const rows: User[] = await resultSet.json();
-    return rows;
-  }
 
   async createUser(username: string, password: string) {
     try {

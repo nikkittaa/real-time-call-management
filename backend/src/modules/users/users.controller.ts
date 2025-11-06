@@ -21,11 +21,6 @@ export class UsersController {
     return this.usersService.getUserById(id);
   }
 
-  @Get()
-  getAllUsers(): Promise<User[]> {
-    return this.usersService.getAllUsers();
-  }
-
   @Post()
   createUser(
     @Body() createUserDto: CreateUserDto,
