@@ -2,16 +2,21 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { Server } from 'http';
+
+interface SignInResponse {
+  accessToken: string;
+}
 
 describe('Call Management System (e2e)', () => {
   let app: INestApplication;
   let authToken: string;
-  let testUserId: string;
+  let server: Server;
 
   // Test data
   const testUser = {
     username: 'Adam1',
-    password: '123456'
+    password: '123456',
   };
 
   const testPhoneNumber = '+17853902194';
@@ -32,10 +37,11 @@ describe('Call Management System (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    
+
     app.enableCors();
-    
+
     await app.init();
+    server = app.getHttpServer() as Server;
   });
 
   afterAll(async () => {
@@ -44,35 +50,27 @@ describe('Call Management System (e2e)', () => {
 
   describe('Health Checks', () => {
     it('should return application status', () => {
-      return request(app.getHttpServer())
-        .get('/')
-        .expect(200)
-        .expect('Hello World!');
+      return request(server).get('/').expect(200).expect('Hello World!');
     });
 
     it('should return health check status', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/health');
-
-      
-    
-        expect(response.body).toHaveProperty('firebase');
-        expect(response.body).toHaveProperty('clickhouse');
-        expect(response.body).toHaveProperty('twilio');
-      
+      const response = await request(server).get('/health');
+      expect(response.body).toHaveProperty('firebase');
+      expect(response.body).toHaveProperty('clickhouse');
+      expect(response.body).toHaveProperty('twilio');
     });
   });
 
   describe(' Authentication Flow', () => {
     it('should create a new user account', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/users')
-        .send(testUser);
+      const response = await request(server).post('/users').send(testUser);
 
       expect([200, 201, 409]).toContain(response.status); // 409 if user already exists
-      
+
       if (response.status === 409) {
-        console.log(' Test user already exists - continuing with existing user');
+        console.log(
+          ' Test user already exists - continuing with existing user',
+        );
       } else {
         expect(response.body).toHaveProperty('message');
         console.log('New test user created successfully');
@@ -80,28 +78,28 @@ describe('Call Management System (e2e)', () => {
     });
 
     it('should sign in with valid credentials', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(server)
         .post('/auth/signin')
         .send(testUser);
 
       expect([200, 201, 401, 500]).toContain(response.status);
-      
+
       if (response.status === 200 || response.status === 201) {
         expect(response.body).toHaveProperty('accessToken');
-        expect(typeof response.body.accessToken).toBe('string');
-        authToken = response.body.accessToken;
+        expect(typeof (response.body as SignInResponse).accessToken).toBe(
+          'string',
+        );
+        authToken = (response.body as SignInResponse).accessToken;
       } else {
         authToken = 'mock-token-for-testing';
       }
     });
 
     it('should reject invalid credentials', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/auth/signin')
-        .send({
-          username: 'invaliduser',
-          password: 'wrongpassword'
-        });
+      const response = await request(server).post('/auth/signin').send({
+        username: 'invaliduser',
+        password: 'wrongpassword',
+      });
 
       expect([401, 500]).toContain(response.status); // 500 if DB connection issues
     });
@@ -111,15 +109,14 @@ describe('Call Management System (e2e)', () => {
         return;
       }
 
-      const response = await request(app.getHttpServer())
+      const response = await request(server)
         .get('/auth/validate-token')
         .query({ token: authToken });
 
       if (response.status === 200) {
         expect(response.body).toHaveProperty('user_id');
         expect(response.body).toHaveProperty('username');
-        testUserId = response.body.user_id;
-      } 
+      }
     });
   });
 
@@ -133,28 +130,30 @@ describe('Call Management System (e2e)', () => {
     it('should retrieve user calls with pagination', async () => {
       if (!authToken) return;
 
-      const response = await request(app.getHttpServer())
+      const response = await request(server)
         .get('/calls')
         .query({ page: 1, limit: 10 })
         .set('Authorization', `Bearer ${authToken}`);
 
       expect([200, 500]).toContain(response.status);
-      
+
       if (response.status === 200) {
         expect(response.body).toHaveProperty('data');
-        expect(Array.isArray(response.body.data)).toBe(true);
+        expect(Array.isArray((response.body as { data: unknown[] }).data)).toBe(
+          true,
+        );
       }
     });
 
     it('should get call analytics', async () => {
       if (!authToken) return;
 
-      const response = await request(app.getHttpServer())
+      const response = await request(server)
         .get('/calls/analytics')
         .set('Authorization', `Bearer ${authToken}`);
 
       expect([200, 500]).toContain(response.status);
-      
+
       if (response.status === 200) {
         expect(response.body).toHaveProperty('total_calls');
         expect(response.body).toHaveProperty('avg_duration');
@@ -162,10 +161,8 @@ describe('Call Management System (e2e)', () => {
       }
     });
 
-
     it('should reject unauthenticated call requests', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/calls');
+      const response = await request(server).get('/calls');
 
       expect([401, 500]).toContain(response.status);
     });
@@ -173,8 +170,7 @@ describe('Call Management System (e2e)', () => {
 
   describe('Twilio Integration', () => {
     it('should return TwiML voice response', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/twilio/voice');
+      const response = await request(server).post('/twilio/voice');
 
       expect([200, 201]).toContain(response.status);
       expect(response.headers['content-type']).toMatch(/text\/xml/);
@@ -185,19 +181,18 @@ describe('Call Management System (e2e)', () => {
     it('should attempt to make a call (may fail without valid Twilio config)', async () => {
       if (!authToken) return;
 
-      const response = await request(app.getHttpServer())
+      const response = await request(server)
         .post('/twilio/make')
         .send({ to: testPhoneNumber })
         .set('Authorization', `Bearer ${authToken}`);
 
       expect([200, 201, 400, 401, 500]).toContain(response.status);
-      
+
       if (response.status === 200) {
         expect(response.body).toHaveProperty('message');
         expect(response.body).toHaveProperty('sid');
-      } 
+      }
     });
-
   });
 
   describe('Call Notes Management', () => {
@@ -207,13 +202,13 @@ describe('Call Management System (e2e)', () => {
     it('should update call notes', async () => {
       if (!authToken) return;
 
-      const response = await request(app.getHttpServer())
+      const response = await request(server)
         .patch(`/calls/${mockCallSid}/notes`)
         .send({ notes: testNotes })
         .set('Authorization', `Bearer ${authToken}`);
 
       expect([200, 500]).toContain(response.status);
-      
+
       if (response.status === 200) {
         expect(response.body).toHaveProperty('updated', true);
         expect(response.body).toHaveProperty('message');
@@ -223,31 +218,29 @@ describe('Call Management System (e2e)', () => {
     it('should retrieve call notes', async () => {
       if (!authToken) return;
 
-      const response = await request(app.getHttpServer())
+      const response = await request(server)
         .get(`/calls/${mockCallSid}/notes`)
         .set('Authorization', `Bearer ${authToken}`);
 
       expect([200, 404, 500]).toContain(response.status);
-    
     });
 
     it('should delete call notes', async () => {
       if (!authToken) return;
 
-      const response = await request(app.getHttpServer())
+      const response = await request(server)
         .delete(`/calls/${mockCallSid}/notes`)
         .set('Authorization', `Bearer ${authToken}`);
 
       expect([200, 500]).toContain(response.status);
-      
+
       if (response.status === 200) {
         expect(response.body).toHaveProperty('updated', true);
       }
     });
 
     it('should reject unauthorized notes access', async () => {
-      const response = await request(app.getHttpServer())
-        .get(`/calls/${mockCallSid}/notes`);
+      const response = await request(server).get(`/calls/${mockCallSid}/notes`);
 
       expect([401, 500]).toContain(response.status);
     });
@@ -255,7 +248,7 @@ describe('Call Management System (e2e)', () => {
 
   describe('Security & Validation', () => {
     it('should handle invalid JSON requests', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(server)
         .post('/auth/signin')
         .send('invalid-json-string')
         .set('Content-Type', 'application/json');
@@ -264,12 +257,8 @@ describe('Call Management System (e2e)', () => {
     });
 
     it('should validate request parameters', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/auth/signin')
-        .send({});
-
+      const response = await request(server).post('/auth/signin').send({});
       expect([400, 401, 500]).toContain(response.status);
     });
   });
-
 });

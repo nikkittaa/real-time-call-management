@@ -82,6 +82,8 @@ describe('TwilioController', () => {
       insertCallDebugInfo: jest.fn(),
       updateRecordingInfo: jest.fn(),
       fetchSummary: jest.fn(),
+      insertEventLog: jest.fn(),
+      
     };
 
     const mockFirebaseService = {

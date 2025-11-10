@@ -345,9 +345,30 @@ export class ClickhouseService implements OnModuleInit {
       this.logger.error(
         `Failed to insert call debug info. Error: ${err.message}`,
       );
-      throw new InternalServerErrorException(
-        'Failed to insert call debug info',
-      );
+    }
+  }
+
+  async insertEventLog(
+    callSid: string,
+    eventData: string,
+    eventResponse: string,
+  ) {
+    try {
+      await this.client.insert({
+        table: 'twilio_event_logs',
+        values: [
+          {
+            call_sid: callSid,
+            event_data: eventData,
+            event_response: eventResponse,
+          },
+        ],
+        format: 'JSONEachRow',
+      });
+      this.logger.info(`Inserted event log for callSid: ${callSid}`);
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`Failed to insert event log. Error: ${err.message}`);
     }
   }
 
@@ -400,7 +421,6 @@ export class ClickhouseService implements OnModuleInit {
     return { updated: true, message: 'Note deleted successfully' };
   }
 
-
   // USER OPERATIONS
   //---------------------------
   async getUserById(userId: string) {
@@ -420,10 +440,10 @@ export class ClickhouseService implements OnModuleInit {
   async getUserByUsername(username: string) {
     const query = 'SELECT * FROM users WHERE username = {username:String}';
     const resultSet = await this.client.query({
-    query,
-    query_params: { username },
-    format: 'JSONEachRow',
-  });
+      query,
+      query_params: { username },
+      format: 'JSONEachRow',
+    });
 
     const rows: User[] = await resultSet.json();
     return rows[0];
@@ -432,8 +452,9 @@ export class ClickhouseService implements OnModuleInit {
   async createUser(username: string, password: string) {
     try {
       const existingUser = await this.client.query({
-        query: 'SELECT username FROM users WHERE username = {username:String} LIMIT 1',
-        query_params: { username },   
+        query:
+          'SELECT username FROM users WHERE username = {username:String} LIMIT 1',
+        query_params: { username },
         format: 'JSON',
       });
 

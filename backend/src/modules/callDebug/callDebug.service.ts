@@ -17,47 +17,75 @@ export class CallDebugService {
   }
 
   // insertCallDebugInfoWithDelay(callSid: string) {
-  //   setTimeout(() => {
-  //     void (async () => {
+  //   setTimeout(async () => {
+  //     const maxRetries = 5;
+  //     const delay = 5000;
+
+  //     for (let attempt = 1; attempt <= maxRetries; attempt++) {
   //       try {
   //         const callSummary = await this.twilioService.fetchSummary(callSid);
-  //         await this.clickhouseService.insertCallDebugInfo(callSummary);
-  //         this.logger.info(`Call summary inserted for callSid: ${callSid}`);
+
+  //         if (callSummary.price != null) {
+  //           await this.clickhouseService.insertCallDebugInfo(callSummary);
+  //           this.logger.info(`Call summary inserted for callSid: ${callSid}`);
+  //           return;
+  //         }
+
+  //         this.logger.warn(
+  //           `Price not yet available for ${callSid}. Attempt ${attempt}/${maxRetries}`,
+  //         );
   //       } catch (error) {
   //         this.logger.error(
-  //           `Failed to fetch or insert call summary for ${callSid}`,
+  //           `Error fetching call summary for ${callSid}:`,
   //           error,
   //         );
   //       }
-  //     })();
-  //   }, 10000);
+
+  //       await new Promise((res) => setTimeout(res, delay));
+  //     }
+
+  //     this.logger.warn(
+  //       `Failed to get complete summary for ${callSid} after ${maxRetries} attempts.`,
+  //     );
+  //   }, 10000); // initial 10s wait
   // }
 
-  async insertCallDebugInfoWithDelay(callSid: string) {
-    const maxRetries = 5;
-    const delay = 5000;
-    await new Promise((res) => setTimeout(res, 10000));
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        const callSummary = await this.twilioService.fetchSummary(callSid);
-        if (callSummary.price != null) {
-          await this.clickhouseService.insertCallDebugInfo(callSummary);
-          this.logger.info(`Call summary inserted for callSid: ${callSid}`);
-          return;
+  insertCallDebugInfoWithDelay(callSid: string) {
+    const initialDelay = 10000;
+
+    setTimeout(() => {
+      // immediately invoked async function
+      void (async () => {
+        const maxRetries = 5;
+        const delay = 5000;
+
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            const callSummary = await this.twilioService.fetchSummary(callSid);
+
+            if (callSummary.price != null) {
+              await this.clickhouseService.insertCallDebugInfo(callSummary);
+              this.logger.info(`Call summary inserted for callSid: ${callSid}`);
+              return;
+            }
+
+            this.logger.warn(
+              `Price not yet available for ${callSid}. Attempt ${attempt}/${maxRetries}`,
+            );
+          } catch (error) {
+            this.logger.error(
+              `Error fetching call summary for ${callSid}:`,
+              error,
+            );
+          }
+
+          await new Promise((res) => setTimeout(res, delay));
         }
 
         this.logger.warn(
-          `Price not yet available for ${callSid}. Attempt ${attempt}/${maxRetries}`,
+          `Failed to get complete summary for ${callSid} after ${maxRetries} attempts.`,
         );
-      } catch (error) {
-        this.logger.error(`Error fetching call summary for ${callSid}:`, error);
-      }
-
-      await new Promise((res) => setTimeout(res, delay));
-    }
-
-    this.logger.warn(
-      `Failed to get complete summary for ${callSid} after ${maxRetries} attempts.`,
-    );
+      })();
+    }, initialDelay);
   }
 }

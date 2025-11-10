@@ -42,7 +42,6 @@ export class TwilioService {
       record: true,
       recordingStatusCallback: `${this.configService.get<string>('PUBLIC_URL')}/twilio/recording-events`,
       recordingStatusCallbackEvent: ['completed'],
-
       applicationSid: this.configService.get<string>('TWIML_APP_SID'),
     });
 

@@ -6,6 +6,7 @@ import {
   Res,
   BadRequestException,
   Inject,
+  Req,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { ClickhouseService } from '../clickhouse/clickhouse.service';
@@ -94,13 +95,22 @@ export class TwilioController {
 
   @Post('voice')
   @ApiExcludeEndpoint()
-  twiml(@Res() res: Response) {
-    res.type('text/xml');
-    res.send(`<?xml version="1.0" encoding="UTF-8"?>
-    <Response>
-        <Say voice="alice">Hello, this is a call from our application. Please stay on the line.</Say>
-        <Say voice="alice">Thank you for calling. Have a great day!</Say>
-    </Response>`);
+  async twiml(@Req() req: Request, @Res() res: Response) {
+    const callSid = (req.body as unknown as TwilioCallEvent)?.CallSid ?? '';
+
+    const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?>
+  <Response>
+      <Say voice="alice">Hello, this is a call from our application. Please stay on the line.</Say>
+      <Say voice="alice">Thank you for calling. Have a great day!</Say>
+  </Response>`;
+
+    await this.clickhouseService.insertEventLog(
+      callSid,
+      JSON.stringify(req.body),
+      JSON.stringify(twimlResponse),
+    );
+
+    res.type('text/xml').send(twimlResponse);
   }
 
   @Post('events')
@@ -115,6 +125,12 @@ export class TwilioController {
       from_number: body.From,
       to_number: body.To,
     });
+
+    await this.clickhouseService.insertEventLog(
+      body.CallSid,
+      JSON.stringify(body),
+      '',
+    );
     if (Object.values(CallStatus).includes(body.CallStatus as CallStatus)) {
       const fullCall = await this.twilioService.fetchFullCallLog(body.CallSid);
       await this.clickhouseService.insertCallLog({
@@ -128,28 +144,10 @@ export class TwilioController {
         user_id: userId,
       });
 
-      //const callSummaryInfo = await this.twilioService.fetchSummary(body.CallSid);
-      //console.log("callSummaryInfo", callSummaryInfo.price);
-      //await this.clickhouseService.insertCallDebugInfo(callSummaryInfo);
       await this.firebaseService.delete(`calls/${userId}/${body.CallSid}`);
       await this.firebaseService.delete(`calls/${body.CallSid}`);
 
-      // setTimeout(() => {
-      //   void (async () => {
-      //     try {
-      //       const callSummary = await this.twilioService.fetchSummary(
-      //         body.CallSid,
-      //       );
-      //       await this.clickhouseService.insertCallDebugInfo(callSummary);
-      //       this.logger.info(
-      //         `Call summary inserted for callSid: ${body.CallSid}`,
-      //       );
-      //     } catch (error) {
-      //       this.logger.error(`Failed to fetch or insert call summary `, error);
-      //     }
-      //   })();
-      // }, 10000);
-      await this.callDebugService.insertCallDebugInfoWithDelay(body.CallSid);
+      this.callDebugService.insertCallDebugInfoWithDelay(body.CallSid);
     }
   }
 
@@ -157,6 +155,11 @@ export class TwilioController {
   @ApiExcludeEndpoint()
   async handleRecordingEvent(@Body() body: TwilioRecordingEvent) {
     const { CallSid, RecordingSid, RecordingUrl } = body;
+    await this.clickhouseService.insertEventLog(
+      body.CallSid,
+      JSON.stringify(body),
+      '',
+    );
     await this.clickhouseService.updateRecordingInfo(
       CallSid,
       RecordingSid,
