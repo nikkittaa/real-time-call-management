@@ -36,10 +36,10 @@ export class CallDebugService {
   async insertCallDebugInfoWithDelay(callSid: string) {
     const maxRetries = 5;
     const delay = 5000;
+    await new Promise((res) => setTimeout(res, 10000));
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         const callSummary = await this.twilioService.fetchSummary(callSid);
-
         if (callSummary.price != null) {
           await this.clickhouseService.insertCallDebugInfo(callSummary);
           this.logger.info(`Call summary inserted for callSid: ${callSid}`);

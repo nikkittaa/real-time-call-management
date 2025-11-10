@@ -79,8 +79,14 @@ export class ClickhouseService implements OnModuleInit {
       format: 'JSONEachRow',
     });
 
-    const result: CallLog[] = await resultSet.json();
-    return result[0];
+    try {
+      const result: CallLog[] = await resultSet.json();
+      return result[0];
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`Failed to get call log. Error: ${err.message}`);
+      throw new InternalServerErrorException('Failed to get call log');
+    }
   }
 
   async getFilteredCalls(userId: string, getCallLogsDto: GetCallLogsDto) {
@@ -426,7 +432,6 @@ GROUP BY call_sid`;
       if (data.length > 0) {
         throw new ConflictException('Username already exists');
       }
-
       const salt = await bcrypt.genSalt();
       const encryptedPassword = await bcrypt.hash(password, salt);
 
