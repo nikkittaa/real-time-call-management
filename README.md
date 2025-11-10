@@ -358,9 +358,6 @@ DELETE /calls/:id/notes         # Delete call notes
 ```
 
 
-```
-
-
 
 ### Test Categories
 
@@ -410,18 +407,14 @@ const analytics = await fetch('/calls/analytics', {
 ```
 
 
-
-```
-
-
-## 🔒 Security Considerations
+## Security Considerations
 
 - **JWT Authentication:** Secure token-based authentication
 - **Input Validation:** Request validation using class-validator
 - **CORS Configuration:** Proper cross-origin resource sharing
 - **Environment Variables:** Sensitive data stored securely
 
-## 📊 Monitoring & Logging
+## Monitoring & Logging
 
 ### Logging Features
 - **Structured Logging:** logs with Winston

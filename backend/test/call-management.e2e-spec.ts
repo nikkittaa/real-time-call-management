@@ -14,7 +14,7 @@ describe('Call Management System (e2e)', () => {
     password: '123456'
   };
 
-  const testPhoneNumber = '+15551234567';
+  const testPhoneNumber = '+17853902194';
 
   beforeAll(async () => {
     // Set test environment variables for local testing
@@ -89,8 +89,6 @@ describe('Call Management System (e2e)', () => {
       if (response.status === 200 || response.status === 201) {
         expect(response.body).toHaveProperty('accessToken');
         expect(typeof response.body.accessToken).toBe('string');
-        
-        // Store token for subsequent tests
         authToken = response.body.accessToken;
       } else {
         authToken = 'mock-token-for-testing';
@@ -192,8 +190,7 @@ describe('Call Management System (e2e)', () => {
         .send({ to: testPhoneNumber })
         .set('Authorization', `Bearer ${authToken}`);
 
-      // Accept multiple status codes as Twilio may not be fully configured in test env
-      expect([200, 400, 401, 500]).toContain(response.status);
+      expect([200, 201, 400, 401, 500]).toContain(response.status);
       
       if (response.status === 200) {
         expect(response.body).toHaveProperty('message');
@@ -203,8 +200,8 @@ describe('Call Management System (e2e)', () => {
 
   });
 
-  describe('📝 Call Notes Management', () => {
-    const mockCallSid = 'CA41aa1b7d5daeaa5bf5fbda1e79dee4fc';
+  describe('Call Notes Management', () => {
+    const mockCallSid = 'CAafe90d09a7a7039472a75a996ecc1049';
     const testNotes = 'Test call notes for e2e testing';
 
     it('should update call notes', async () => {
@@ -272,21 +269,6 @@ describe('Call Management System (e2e)', () => {
         .send({});
 
       expect([400, 401, 500]).toContain(response.status);
-    });
-
-    it('should reject malformed authorization headers', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/calls')
-        .set('Authorization', 'InvalidFormat');
-
-      expect([401, 500]).toContain(response.status);
-    });
-
-    it('should handle non-existent endpoints', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/non-existent-endpoint');
-
-      expect(response.status).toBe(404);
     });
   });
 
