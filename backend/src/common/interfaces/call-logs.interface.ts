@@ -1,3 +1,5 @@
+import { ApiProperty } from '@nestjs/swagger';
+
 export interface CallLog {
   call_sid: string;
   from_number: string;
@@ -9,7 +11,47 @@ export interface CallLog {
   notes?: string;
   user_id?: string;
   created_at?: Date | string | null;
-  updated_at?: Date | string | null;
   recording_sid?: string;
+  recording_url?: string;
+}
+
+export class CallLogResponse implements CallLog {
+  @ApiProperty({ description: 'Call SID', example: 'CA1234567890' })
+  call_sid: string;
+
+  @ApiProperty({ description: 'From number', example: '+1234567890' })
+  from_number: string;
+
+  @ApiProperty({ description: 'To number', example: '+1234567890' })
+  to_number: string;
+
+  @ApiProperty({ description: 'Status', example: 'completed' })
+  status: string;
+
+  @ApiProperty({ description: 'Duration', example: 100 })
+  duration: number;
+
+  @ApiProperty({ description: 'Start time', example: '2025-01-01T10:00:00Z' })
+  start_time: Date | string | null;
+
+  @ApiProperty({ description: 'End time', example: '2025-01-01T10:00:00Z' })
+  end_time: Date | string | null;
+
+  @ApiProperty({ description: 'Notes', example: 'This is a note' })
+  notes?: string;
+
+  @ApiProperty({ description: 'User ID', example: '1234567890' })
+  user_id?: string;
+
+  @ApiProperty({ description: 'Created at', example: '2025-01-01T10:00:00Z' })
+  created_at?: Date | string | null;
+
+  @ApiProperty({ description: 'Recording SID', example: 'CA1234567890' })
+  recording_sid?: string;
+
+  @ApiProperty({
+    description: 'Recording URL',
+    example: 'https://api.twilio.com/recording.mp3',
+  })
   recording_url?: string;
 }

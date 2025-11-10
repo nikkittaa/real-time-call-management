@@ -127,9 +127,7 @@ describe('ClickhouseService', () => {
         values: [callData],
         format: 'JSONEachRow',
       });
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        `Inserted call log!`,
-      );
+      expect(mockLogger.info).toHaveBeenCalledWith(`Inserted call log!`);
     });
 
     it('should handle insertion errors', async () => {

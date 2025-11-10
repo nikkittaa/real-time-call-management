@@ -3,7 +3,9 @@ import { FirebaseService } from '../modules/firebase/firebase.service';
 import { ClickhouseService } from '../modules/clickhouse/clickhouse.service';
 import { TwilioService } from '../modules/twilio/twilio.service';
 import { GetCallLogsDto } from 'src/modules/calls/dto/get-call-logs.dto';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Health')
 @Controller('health')
 export class HealthController {
   constructor(
@@ -13,6 +15,21 @@ export class HealthController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'Check health' })
+  @ApiResponse({
+    status: 200,
+    description: 'Health checked successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        firebase: { type: 'string' },
+        clickhouse: { type: 'string' },
+        twilio: { type: 'string' },
+        uptime: { type: 'number' },
+        timestamp: { type: 'string' },
+      },
+    },
+  })
   async checkHealth() {
     const status = {
       firebase: 'unknown',

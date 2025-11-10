@@ -5,8 +5,6 @@ import {
   UseGuards,
   Res,
   BadRequestException,
-  Get,
-  Query,
   Inject,
 } from '@nestjs/common';
 import type { Response } from 'express';
@@ -18,11 +16,21 @@ import { User } from '../users/user.entity';
 import { formatDateForClickHouse } from 'src/utils/formatDatefoClickhouse';
 import { FirebaseService } from '../firebase/firebase.service';
 import { CallStatus } from 'src/common/enums/call-status.enum';
-import type { TwilioCallEvent } from 'src/common/interfaces/twilio-callevent.interface';
-import type { TwilioRecordingEvent } from 'src/common/interfaces/twilio-recordingevent.interface';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiExcludeEndpoint,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { CallDebugService } from '../callDebug/callDebug.service';
+import type { TwilioRecordingEvent } from 'src/common/interfaces/twilio-recordingevent.interface';
+import type { TwilioCallEvent } from 'src/common/interfaces/twilio-callevent.interface';
 
+@ApiTags('Twilio')
 @Controller('twilio')
 export class TwilioController {
   private readonly logger: Logger;
@@ -30,12 +38,43 @@ export class TwilioController {
     private readonly clickhouseService: ClickhouseService,
     private twilioService: TwilioService,
     private firebaseService: FirebaseService,
+    private callDebugService: CallDebugService,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly parentLogger: Logger,
   ) {
     this.logger = this.parentLogger.child({ context: 'TwilioController' });
   }
 
   @Post('make')
+  @ApiOperation({ summary: 'Make a call' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        to: { type: 'string', example: '+1234567890' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Call initiated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Call initiated successfully' },
+        sid: { type: 'string', example: 'CA1234567890' },
+        status: {
+          type: 'enum',
+          enum: Object.values(CallStatus),
+          example: CallStatus.COMPLETED,
+        },
+        to: { type: 'string', example: '+1234567890' },
+        userId: { type: 'string', example: '1234567890' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   async makeCall(@Body('to') to: string, @GetUser() user: User) {
     try {
@@ -54,6 +93,7 @@ export class TwilioController {
   }
 
   @Post('voice')
+  @ApiExcludeEndpoint()
   twiml(@Res() res: Response) {
     res.type('text/xml');
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
@@ -64,6 +104,7 @@ export class TwilioController {
   }
 
   @Post('events')
+  @ApiExcludeEndpoint()
   async handleEvent(@Body() body: TwilioCallEvent) {
     const userData = await this.firebaseService.read(`calls/${body.CallSid}`);
     const user = userData.val() as { user_id: string } | undefined;
@@ -93,25 +134,27 @@ export class TwilioController {
       await this.firebaseService.delete(`calls/${userId}/${body.CallSid}`);
       await this.firebaseService.delete(`calls/${body.CallSid}`);
 
-      setTimeout(() => {
-        void (async () => {
-          try {
-            const callSummary = await this.twilioService.fetchSummary(
-              body.CallSid,
-            );
-            await this.clickhouseService.insertCallDebugInfo(callSummary);
-            this.logger.info(
-              `Call summary inserted for callSid: ${body.CallSid}`,
-            );
-          } catch (error) {
-            this.logger.error(`Failed to fetch or insert call summary `, error);
-          }
-        })();
-      }, 10000);
+      // setTimeout(() => {
+      //   void (async () => {
+      //     try {
+      //       const callSummary = await this.twilioService.fetchSummary(
+      //         body.CallSid,
+      //       );
+      //       await this.clickhouseService.insertCallDebugInfo(callSummary);
+      //       this.logger.info(
+      //         `Call summary inserted for callSid: ${body.CallSid}`,
+      //       );
+      //     } catch (error) {
+      //       this.logger.error(`Failed to fetch or insert call summary `, error);
+      //     }
+      //   })();
+      // }, 10000);
+      await this.callDebugService.insertCallDebugInfoWithDelay(body.CallSid);
     }
   }
 
   @Post('recording-events')
+  @ApiExcludeEndpoint()
   async handleRecordingEvent(@Body() body: TwilioRecordingEvent) {
     const { CallSid, RecordingSid, RecordingUrl } = body;
     await this.clickhouseService.updateRecordingInfo(
@@ -120,15 +163,5 @@ export class TwilioController {
       RecordingUrl,
     );
     return 'OK';
-  }
-
-  @Get('summary')
-  @UseGuards(AuthGuard('jwt'))
-  async getSummary(@Query('callSid') callSid: string) {
-    if (!callSid) {
-      return 'CallSid is required';
-    }
-
-    return this.clickhouseService.fetchSummary(callSid);
   }
 }

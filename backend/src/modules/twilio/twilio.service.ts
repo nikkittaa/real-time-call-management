@@ -75,7 +75,11 @@ export class TwilioService {
       direction: fullCall.direction,
       duration: Number(fullCall.duration),
       status: fullCall.status,
-      price: fullCall.price ? parseFloat(fullCall.price) : 0.0,
+      price: fullCall.price
+        ? parseFloat(fullCall.price)
+        : fullCall.status === 'completed'
+          ? null
+          : 0.0,
       price_unit: fullCall.priceUnit,
       recordings: JSON.stringify(recordings),
       events: JSON.stringify(events),

@@ -13,6 +13,7 @@ import { JwtPayload } from 'src/common/interfaces/jwt-payload.interface';
 import { CallStatus } from 'src/common/enums/call-status.enum';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { CallLog } from 'src/common/interfaces/call-logs.interface';
+import { CallDebugInfo } from 'src/common/interfaces/call-debug-info.interface';
 
 describe('CallController', () => {
   let callController: CallController;
@@ -26,7 +27,6 @@ describe('CallController', () => {
     username: 'testuser',
     password: 'hashedpassword',
     createdAt: new Date(),
-    updatedAt: new Date(),
   };
 
   const mockJwtPayload: JwtPayload = {
@@ -62,6 +62,7 @@ describe('CallController', () => {
       getCallNotes: jest.fn(),
       updateCallNotes: jest.fn(),
       deleteCallNotes: jest.fn(),
+      fetchSummary: jest.fn(),
     };
 
     const mockFirebaseService = {
@@ -177,6 +178,34 @@ describe('CallController', () => {
         mockUser.user_id,
         getCallLogsDto,
       );
+    });
+  });
+
+  describe('getSummary', () => {
+    it('should return call summary', async () => {
+      const callSid = 'CA123456789';
+      const expectedSummary: CallDebugInfo = {
+        callSid: 'CA123456789',
+        from: '+1234567890',
+        to: '+0987654321',
+        date_created: new Date(),
+        start_time: new Date(),
+        end_time: new Date(),
+        direction: 'outbound-api',
+        duration: 120,
+        status: 'completed',
+        price: -0.05,
+        price_unit: 'USD',
+        recordings: '[]',
+        events: '[]',
+      };
+
+      callsService.fetchSummary.mockResolvedValue(expectedSummary);
+
+      const result = await callController.getSummary(callSid);
+
+      expect(result).toEqual(expectedSummary);
+      expect(callsService.fetchSummary).toHaveBeenCalledWith(callSid);
     });
   });
 

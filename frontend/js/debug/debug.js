@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const callSid = new URLSearchParams(window.location.search).get('callSid');
   await checkAuth();
   const token = localStorage.getItem('token');
-  const res = await fetch(`http://localhost:3002/twilio/summary?callSid=${callSid}`, {
+  const res = await fetch(`http://localhost:3002/calls/summary?callSid=${callSid}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
   let data;
@@ -46,11 +46,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     
         const header = document.createElement("p");
         header.classList.add("event-header");
-        header.textContent = `${event.request.method} ${event.request.url}`;
-    
+        if(Object.keys(event.request.parameters).includes("call_status")) {
+          header.innerHTML = `${event.request.method} <span class="call-status">${event.request.parameters.call_status}</span> ${event.request.url}`;
+        }else{
+          header.innerHTML = `${event.request.method} ${event.request.url}`;
+        }
+
+
+       
         const details = document.createElement("div");
         details.classList.add("event-details");
+        details.innerHTML = `<strong>Request:</strong><br>`;
        for(const [key, value] of Object.entries(event.request.parameters)) {
+        details.innerHTML += `<strong>${key}:</strong> ${value}<br>`;
+       }
+       details.innerHTML += `<br>`;
+       details.innerHTML += `<strong>Response:</strong><br>`;
+      
+       for(const [key, value] of Object.entries(event.response)) {
         details.innerHTML += `<strong>${key}:</strong> ${value}<br>`;
        }
        details.innerHTML += `<br>`;

@@ -31,4 +31,8 @@ export class CallsService {
   async getAnalytics(userId: string, getCallLogsDto: GetCallLogsDto) {
     return this.clickhouseService.getAnalytics(userId, getCallLogsDto);
   }
+
+  async fetchSummary(callSid: string) {
+    return this.clickhouseService.fetchSummary(callSid);
+  }
 }

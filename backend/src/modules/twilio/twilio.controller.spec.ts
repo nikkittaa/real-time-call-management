@@ -1,27 +1,26 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, Response } from '@nestjs/common';
 import { TwilioController } from './twilio.controller';
 import { TwilioService } from './twilio.service';
 import { ClickhouseService } from '../clickhouse/clickhouse.service';
 import { FirebaseService } from '../firebase/firebase.service';
 import { User } from '../users/user.entity';
-import { TwilioCallEvent } from 'src/common/interfaces/twilio-callevent.interface';
-import { TwilioRecordingEvent } from 'src/common/interfaces/twilio-recordingevent.interface';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { CallDebugInfo } from 'src/common/interfaces/call-debug-info.interface';
+import { CallDebugService } from '../callDebug/callDebug.service';
+import { TwilioRecordingEvent } from 'src/common/interfaces/twilio-recordingevent.interface';
+import { TwilioCallEvent } from 'src/common/interfaces/twilio-callevent.interface';
 
 describe('TwilioController', () => {
   let twilioController: TwilioController;
   let twilioService: jest.Mocked<TwilioService>;
   let clickhouseService: jest.Mocked<ClickhouseService>;
   let firebaseService: jest.Mocked<FirebaseService>;
+  let callDebugService: jest.Mocked<CallDebugService>;
 
   const mockUser: User = {
     user_id: '123',
     username: 'testuser',
     password: 'hashedpassword',
     createdAt: new Date(),
-    updatedAt: new Date(),
   };
 
   const mockCall = {
@@ -92,6 +91,10 @@ describe('TwilioController', () => {
       listen: jest.fn(),
     };
 
+    const mockCallDebugService = {
+      insertCallDebugInfoWithDelay: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TwilioController],
       providers: [
@@ -108,6 +111,10 @@ describe('TwilioController', () => {
           useValue: mockFirebaseService,
         },
         {
+          provide: CallDebugService,
+          useValue: mockCallDebugService,
+        },
+        {
           provide: WINSTON_MODULE_PROVIDER,
           useValue: mockLogger,
         },
@@ -118,6 +125,7 @@ describe('TwilioController', () => {
     twilioService = module.get(TwilioService);
     clickhouseService = module.get(ClickhouseService);
     firebaseService = module.get(FirebaseService);
+    callDebugService = module.get(CallDebugService);
   });
 
   afterEach(() => {
@@ -185,8 +193,6 @@ describe('TwilioController', () => {
       firebaseService.delete.mockResolvedValue(undefined);
       twilioService.fetchFullCallLog.mockResolvedValue(mockFullCall as any);
       clickhouseService.insertCallLog.mockResolvedValue(undefined);
-      twilioService.fetchSummary.mockResolvedValue(mockCallSummary);
-      clickhouseService.insertCallDebugInfo.mockResolvedValue(undefined);
 
       await twilioController.handleEvent(mockCallEvent);
 
@@ -252,34 +258,6 @@ describe('TwilioController', () => {
         mockRecordingEvent.RecordingSid,
         mockRecordingEvent.RecordingUrl,
       );
-    });
-  });
-
-  describe('getSummary', () => {
-    it('should return call summary for valid callSid', async () => {
-      const callSid = 'CA123456789';
-      const expectedSummary: CallDebugInfo = {
-        callSid: 'CA123456789',
-        from: '+1234567890',
-        to: '+0987654321',
-        date_created: '2023-01-01 10:00:00',
-        start_time: '2023-01-01 10:00:30',
-        end_time: '2023-01-01 10:02:30',
-        direction: 'outbound-api',
-        duration: 120,
-        status: 'completed',
-        price: -0.05,
-        price_unit: 'USD',
-        recordings: '[]',
-        events: '[]',
-      };
-
-      clickhouseService.fetchSummary.mockResolvedValue(expectedSummary);
-
-      const result = await twilioController.getSummary(callSid);
-
-      expect(result).toEqual(expectedSummary);
-      expect(clickhouseService.fetchSummary).toHaveBeenCalledWith(callSid);
     });
   });
 });

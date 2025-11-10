@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -28,7 +29,20 @@ import { Readable } from 'stream';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { CallDataFirebase } from 'src/common/interfaces/calldata-firebase.interface';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { CallLogResponse } from 'src/common/interfaces/call-logs.interface';
+import { AnalyticDto } from './dto/analytic.dto';
+import { CallEventDto } from './dto/callEvent.dto';
+import { DebugInfoDto } from './dto/debugInfo.dto';
 
+@ApiTags('Calls')
 @Controller('calls')
 export class CallController {
   private readonly logger: Logger;
@@ -43,6 +57,15 @@ export class CallController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Get filtered calls' })
+  @ApiResponse({
+    status: 200,
+    description: 'Filtered calls fetched successfully',
+    type: CallLogResponse,
+    isArray: true,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   async getCalls(
     @GetUser() user: User,
@@ -52,6 +75,14 @@ export class CallController {
   }
 
   @Get('export')
+  @ApiOperation({ summary: 'Export calls' })
+  @ApiResponse({
+    status: 200,
+    description: 'Calls exported successfully',
+    content: { 'text/csv': { example: 'csvData' } },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   async exportCalls(
     @GetUser() user: User,
@@ -77,6 +108,14 @@ export class CallController {
   }
 
   @Get('analytics')
+  @ApiOperation({ summary: 'Get analytics' })
+  @ApiResponse({
+    status: 200,
+    description: 'Analytics fetched successfully',
+    type: AnalyticDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   async getAnalytics(
     @GetUser() user: User,
@@ -85,7 +124,33 @@ export class CallController {
     return this.callService.getAnalytics(user.user_id, getCallLogsDto);
   }
 
+  @Get('summary')
+  @ApiOperation({ summary: 'Get call summary/ debug info' })
+  @ApiResponse({
+    status: 200,
+    description: 'Call summary fetched successfully',
+    type: DebugInfoDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 400, description: 'CallSid is required' })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  async getSummary(@Query('callSid') callSid: string) {
+    if (!callSid) {
+      throw new BadRequestException('CallSid is required');
+    }
+
+    return this.callService.fetchSummary(callSid);
+  }
+
   @Sse('stream')
+  @ApiOperation({ summary: 'Stream calls' })
+  @ApiResponse({
+    status: 200,
+    description: 'Calls streamed successfully',
+    type: CallEventDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   streamCalls(@Query('token') token: string): Observable<MessageEvent> {
     let payload: JwtPayload;
     try {
@@ -114,12 +179,57 @@ export class CallController {
   }
 
   @Get('/:callSid/notes')
+  @ApiOperation({ summary: 'Get call notes' })
+  @ApiResponse({
+    status: 200,
+    description: 'Call notes fetched successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        notes: {
+          type: 'string',
+          example: 'This customer requested a callback tomorrow.',
+        },
+      },
+    },
+  })
+  @ApiParam({
+    name: 'callSid',
+    description: 'Call SID',
+    example: 'CA1234567890',
+  })
+  @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   async getCallNotes(@GetUser() user: User, @Param('callSid') callSid: string) {
     return this.callService.getCallNotes(callSid, user.user_id);
   }
 
   @Patch('/:id/notes')
+  @ApiOperation({ summary: 'Update call notes' })
+  @ApiParam({ name: 'id', description: 'Call SID', example: 'CA1234567890' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        notes: {
+          type: 'string',
+          example: 'This customer requested a callback tomorrow.',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Call notes updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        updated: { type: 'boolean', example: true },
+        message: { type: 'string', example: 'Note updated successfully' },
+      },
+    },
+  })
+  @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   async updateCallNotes(
     @GetUser() user: User,
@@ -135,6 +245,20 @@ export class CallController {
   }
 
   @Delete('/:id/notes')
+  @ApiOperation({ summary: 'Delete call notes' })
+  @ApiParam({ name: 'id', description: 'Call SID', example: 'CA1234567890' })
+  @ApiResponse({
+    status: 200,
+    description: 'Call notes deleted successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        updated: { type: 'boolean', example: true },
+        message: { type: 'string', example: 'Note deleted successfully' },
+      },
+    },
+  })
+  @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   async deleteCallNotes(@Param('id') id: string) {
     return this.callService.deleteCallNotes(id);

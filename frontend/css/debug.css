@@ -119,3 +119,8 @@ body {
     white-space: pre-wrap;
     overflow-x: auto;
   }
+
+  .call-status{
+    color: rgb(0, 116, 0);
+    text-transform: uppercase;
+  }

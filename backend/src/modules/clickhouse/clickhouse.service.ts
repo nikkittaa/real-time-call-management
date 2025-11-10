@@ -355,7 +355,7 @@ export class ClickhouseService implements OnModuleInit {
   async getCallNotes(callSid: string, userId: string) {
     const query = `SELECT 
   argMax(notes, created_at) AS notes
-FROM call_logs_new    
+FROM call_logs   
 WHERE call_sid = '${callSid}' 
   AND user_id = '${userId}'
 GROUP BY call_sid`;

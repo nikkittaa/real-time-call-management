@@ -1,7 +1,7 @@
-# Simple static site served via Nginx
+#static site served via Nginx
 FROM nginx:alpine
 
-# Copy your HTML, CSS, and JS files
+# Copy HTML, CSS, and JS files
 COPY ./nginx.conf /etc/nginx/nginx.conf
 COPY . /usr/share/nginx/html
 
