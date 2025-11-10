@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
        details.innerHTML += `<strong>Response:</strong><br>`;
       
        for(const [key, value] of Object.entries(event.response)) {
-        details.innerHTML += `<strong>${key}:</strong> ${value}<br>`;
+        details.innerHTML += `<strong>${key}:</strong> ${escapeHtml(JSON.stringify(value))}<br>`;
        }
        details.innerHTML += `<br>`;
     
@@ -83,3 +83,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
 });
+
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
