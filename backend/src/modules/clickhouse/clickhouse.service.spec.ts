@@ -47,7 +47,6 @@ describe('ClickhouseService', () => {
     username: 'testuser',
     password: '$2b$10$hashedpassword',
     createdAt: new Date('2025-01-01'),
-    updatedAt: new Date('2025-01-01'),
   };
 
   const mockCallLog: CallLog = {
@@ -171,7 +170,8 @@ describe('ClickhouseService', () => {
 
       expect(result).toEqual({ message: 'User created successfully' });
       expect(mockClickhouseClient.query).toHaveBeenCalledWith({
-        query: `SELECT username FROM users WHERE username = '${username}' LIMIT 1`,
+        query: `SELECT username FROM users WHERE username = {username:String} LIMIT 1`,
+        query_params: { username },
         format: 'JSON',
       });
       expect(mockClickhouseClient.insert).toHaveBeenCalled();

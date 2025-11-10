@@ -19,7 +19,6 @@ describe('AuthService', () => {
     username: 'testuser',
     password: 'hashedpassword',
     createdAt: new Date(),
-    updatedAt: new Date(),
   };
 
   const mockJwtPayload: JwtPayload = {

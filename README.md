@@ -138,8 +138,9 @@ real-time-call-management/
 │   │       └── formatDatefoClickhouse.ts
 │   │
 │   ├── 📂 test/                       # Test files
-│   │   ├── app.e2e-spec.ts          
-│   │   └── jest-e2e.json             # E2E test configuration
+│   │   ├── app.e2e-spec.ts  
+|   |   |__ call-management.e2e.spec.ts        
+│   │   └── jest-e2e.json          
 │   │
 │   ├── 📄 package.json                # NPM dependencies and scripts
 │   ├── 📄 package-lock.json          # Dependency lock file
@@ -359,26 +360,7 @@ DELETE /calls/:id/notes         # Delete call notes
 
 ```
 
-## 🧪 Testing
 
-The project includes comprehensive testing suites:
-
-### Run All Tests
-```bash
-cd backend
-
-# Unit tests
-npm test
-
-# E2E tests  
-npm run test:e2e
-
-# Test coverage
-npm run test:cov
-
-# Watch mode
-npm run test:watch
-```
 
 ### Test Categories
 
@@ -386,11 +368,8 @@ npm run test:watch
 - **E2E Tests:** Full application flow testing including:
   - Authentication flows
   - Call management operations
-  - Real-time features
-  - Error handling
   - Security validation
-  - Performance testing
-
+ 
 
 ## 📚 API Documentation
 

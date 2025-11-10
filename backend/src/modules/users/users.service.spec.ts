@@ -13,7 +13,6 @@ describe('UsersService', () => {
     username: 'testuser',
     password: 'hashedpassword',
     createdAt: new Date('2023-01-01T10:00:00Z'),
-    updatedAt: new Date('2023-01-01T10:00:00Z'),
   };
 
   beforeEach(async () => {

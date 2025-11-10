@@ -40,6 +40,8 @@ export class ClickhouseService implements OnModuleInit {
     });
   }
 
+  // CALL LOGS OPERATIONS
+  // ------------------------------------
   async insertCallLog(callData: any) {
     try {
       await this.client.insert({
@@ -70,12 +72,13 @@ export class ClickhouseService implements OnModuleInit {
       argMax(recording_url, created_at) as recording_url,
       argMax(user_id, created_at) as user_id
     FROM call_logs
-    WHERE call_sid = '${callSid}'
+    WHERE call_sid = {callSid:String}
     GROUP BY call_sid
   `;
 
     const resultSet = await this.client.query({
       query,
+      query_params: { callSid },
       format: 'JSONEachRow',
     });
 
@@ -135,12 +138,13 @@ export class ClickhouseService implements OnModuleInit {
       GROUP BY call_sid
       ${whereClause}
       ORDER BY argMax(start_time, created_at) as start_time DESC
-      LIMIT ${limit} OFFSET ${offset}
+      LIMIT {limit:UInt64} OFFSET {offset:UInt64}
     `;
 
     try {
       const resultSet = await this.client.query({
         query,
+        query_params: { limit, offset },
         format: 'JSONEachRow',
       });
       const result: CallLog[] = await resultSet.json();
@@ -358,16 +362,19 @@ export class ClickhouseService implements OnModuleInit {
     return result[0];
   }
 
+  // CALL NOTES OPERATIONS
+  //----------------------------
   async getCallNotes(callSid: string, userId: string) {
     const query = `SELECT 
   argMax(notes, created_at) AS notes
-FROM call_logs   
-WHERE call_sid = '${callSid}' 
-  AND user_id = '${userId}'
-GROUP BY call_sid`;
+  FROM call_logs   
+  WHERE call_sid = {callSid:String} 
+  AND user_id = {userId:String}
+  GROUP BY call_sid`;
 
     const resultSet = await this.client.query({
       query: query,
+      query_params: { callSid, userId },
       format: 'JSONEachRow',
     });
 
@@ -393,12 +400,16 @@ GROUP BY call_sid`;
     return { updated: true, message: 'Note deleted successfully' };
   }
 
+
+  // USER OPERATIONS
+  //---------------------------
   async getUserById(userId: string) {
     const query = `
-      SELECT * FROM users WHERE user_id = '${userId}'`;
+      SELECT * FROM users WHERE user_id = {userId:String}`;
 
     const resultSet = await this.client.query({
       query: query,
+      query_params: { userId },
       format: 'JSONEachRow',
     });
 
@@ -407,13 +418,12 @@ GROUP BY call_sid`;
   }
 
   async getUserByUsername(username: string) {
-    const query = `
-      SELECT * FROM users WHERE username = '${username}'`;
-
+    const query = 'SELECT * FROM users WHERE username = {username:String}';
     const resultSet = await this.client.query({
-      query: query,
-      format: 'JSONEachRow',
-    });
+    query,
+    query_params: { username },
+    format: 'JSONEachRow',
+  });
 
     const rows: User[] = await resultSet.json();
     return rows[0];
@@ -422,7 +432,8 @@ GROUP BY call_sid`;
   async createUser(username: string, password: string) {
     try {
       const existingUser = await this.client.query({
-        query: `SELECT username FROM users WHERE username = '${username}' LIMIT 1`,
+        query: 'SELECT username FROM users WHERE username = {username:String} LIMIT 1',
+        query_params: { username },   
         format: 'JSON',
       });
 
