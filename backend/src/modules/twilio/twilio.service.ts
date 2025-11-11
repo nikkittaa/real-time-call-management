@@ -39,9 +39,9 @@ export class TwilioService {
       from,
       to,
       statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
-      record: true,
-      recordingStatusCallback: `${this.configService.get<string>('PUBLIC_URL')}/twilio/recording-events`,
-      recordingStatusCallbackEvent: ['completed'],
+    //  record: true,
+     // recordingStatusCallback: `${this.configService.get<string>('PUBLIC_URL')}/twilio/recording-events`,
+      //recordingStatusCallbackEvent: ['completed'],
       applicationSid: this.configService.get<string>('TWIML_APP_SID'),
     });
 
@@ -51,6 +51,47 @@ export class TwilioService {
 
     return call;
   }
+
+  async startRecording(callSid: string) {
+    try {
+      const recordings = await this.client.calls(callSid).recordings.list({ limit: 1 });
+
+      if (recordings.length > 0){
+        const recordingSid = recordings[0].sid;
+        await this.client.calls(callSid).recordings(recordingSid).update({ status: 'in-progress' });
+        this.logger.info(`Recording started for callSid: ${callSid}`);
+      }else{
+        const recording = await this.client.calls(callSid).recordings.create({
+          recordingStatusCallback: `${this.configService.get<string>('PUBLIC_URL')}/twilio/recording-events`,
+          recordingStatusCallbackEvent: ['completed'],
+        });
+        this.logger.info(`Recording started for callSid: ${callSid}`);
+        return recording.sid;
+      }
+    } catch (error) {
+      this.logger.error(`Failed to start recording for ${callSid}`, error);
+      throw error;
+    }
+  }
+
+  async stopRecording(callSid: string) {
+    try {
+      const recordings = await this.client.calls(callSid).recordings.list({ limit: 1 });
+      if (recordings.length === 0) {
+        this.logger.warn(`No active recording found for ${callSid}`);
+        return null;
+      }
+  
+      const recordingSid = recordings[0].sid;
+      await this.client.calls(callSid).recordings(recordingSid).update({ status: 'paused' });
+      this.logger.info(`Recording paused for callSid: ${callSid}`);
+      return recordingSid;
+    } catch (error) {
+      this.logger.error(`Failed to pause recording for ${callSid}`, error);
+      throw error;
+    }
+  }
+  
 
   async fetchSummary(callSid: string) {
     this.logger.info(`Fetching summary for callSid: ${callSid}`);

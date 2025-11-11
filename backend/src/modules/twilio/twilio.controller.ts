@@ -7,6 +7,7 @@ import {
   BadRequestException,
   Inject,
   Req,
+  Param,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { ClickhouseService } from '../clickhouse/clickhouse.service';
@@ -96,11 +97,14 @@ export class TwilioController {
   @Post('voice')
   @ApiExcludeEndpoint()
   async twiml(@Req() req: Request, @Res() res: Response) {
-    const callSid = (req.body as unknown as TwilioCallEvent)?.CallSid ?? '';
+    const callSid = (req.body as unknown as TwilioCallEvent)?.CallSid ?? 'test';
 
     const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?>
   <Response>
       <Say voice="alice">Hello, this is a call from our application. Please stay on the line.</Say>
+      <Say voice="alice">This is line 1</Say>
+      <Say voice="alice">This is line 2</Say>
+      <Say voice="alice">This is line 3</Say>
       <Say voice="alice">Thank you for calling. Have a great day!</Say>
   </Response>`;
 
@@ -151,6 +155,43 @@ export class TwilioController {
     }
   }
 
+  @Post(':callSid/start-recording')
+  @ApiExcludeEndpoint()
+  @UseGuards(AuthGuard('jwt'))
+  async startRecording(@Param('callSid') callSid: string) {
+    try{
+      const res = await this.twilioService.startRecording(callSid);
+      await this.clickhouseService.insertEventLog(
+        callSid,
+        'Recording started',
+        JSON.stringify(res),
+      );
+      return res;
+    }catch(error){
+      const err = error as Error;
+      throw new BadRequestException(`Failed to start recording: ${err.message}`);
+    }
+}
+
+@Post(':callSid/stop-recording')
+  @ApiExcludeEndpoint()
+  @UseGuards(AuthGuard('jwt'))
+  async stopRecording(@Param('callSid') callSid: string) {
+    try{
+      const res = await this.twilioService.stopRecording(callSid);
+      await this.clickhouseService.insertEventLog(
+        callSid,
+        'Recording stopped',
+        JSON.stringify(res),
+      );
+      return res;
+    }catch(error){
+      const err = error as Error;
+      throw new BadRequestException(`Failed to stop recording: ${err.message}`);
+    }
+  }
+    
+
   @Post('recording-events')
   @ApiExcludeEndpoint()
   async handleRecordingEvent(@Body() body: TwilioRecordingEvent) {
@@ -158,13 +199,17 @@ export class TwilioController {
     await this.clickhouseService.insertEventLog(
       body.CallSid,
       JSON.stringify(body),
-      '',
+      'OK',
     );
-    await this.clickhouseService.updateRecordingInfo(
+
+    if(body.RecordingStatus === 'completed'){
+       await this.clickhouseService.updateRecordingInfo(
       CallSid,
       RecordingSid,
       RecordingUrl,
     );
+    }
+   
     return 'OK';
   }
 }

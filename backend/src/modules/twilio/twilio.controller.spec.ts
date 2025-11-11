@@ -246,6 +246,7 @@ describe('TwilioController', () => {
       CallSid: 'CA123456789',
       RecordingSid: 'RE123456789',
       RecordingUrl: 'https://api.twilio.com/recording.wav',
+      RecordingStatus: 'completed',
     };
 
     it('should handle recording event successfully', async () => {

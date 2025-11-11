@@ -1,4 +1,5 @@
-import { getToken } from './utils.js';
+import { getToken, recordingAction } from './utils.js';
+
 export function initCallStream() {
     const callsContainer = document.getElementById('callsContainer');
     let eventSource;
@@ -38,6 +39,15 @@ export function initCallStream() {
               if(document.getElementById(data.callSid)){
                 const status = document.getElementById(`status-${data.callSid}`);
                 status.innerText = data.call.status || '-';
+                if(data.call.status === 'in-progress'){
+                  const card = document.getElementById(data.callSid);
+                  const toggleRecordingButton = document.createElement('button');
+                  toggleRecordingButton.innerText = 'Start Recording';
+                  toggleRecordingButton.setAttribute('id', `recordingAction-${data.callSid}`);
+                  
+                  toggleRecordingButton.addEventListener('click', () => recordingAction(data.callSid));
+                  card.appendChild(toggleRecordingButton);
+                }
               }else{
                 const card = document.createElement('div');
                 card.setAttribute('id', data.callSid);

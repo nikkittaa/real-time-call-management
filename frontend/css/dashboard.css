@@ -86,10 +86,6 @@
     transition: background 0.3s;
   }
   
-  .call-section button:hover {
-    background-color: #15803d;
-  }
-  
   /* ============ Messages ============ */
   .message {
     font-size: 0.95rem;
@@ -123,10 +119,18 @@
     transition: transform 0.2s ease;
   }
   
-  .call-card:hover {
-    transform: scale(1.02);
+  .call-card button {
+    background-color: #1639a3;
+    color: white;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s;
   }
-  
+ 
   /* ============ Responsive Design ============ */
   @media (max-width: 600px) {
     .dashboard-container {
