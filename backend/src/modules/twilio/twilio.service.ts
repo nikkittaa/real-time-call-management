@@ -112,6 +112,7 @@ export class TwilioService {
   async fetchSummary(callSid: string) {
     this.logger.info(`Fetching summary for callSid: ${callSid}`);
     const fullCall = await this.fetchFullCallLog(callSid);
+    const childCalls = await this.client.calls.list({ parentCallSid: callSid });
     const events = await this.client.api.v2010
       .accounts(this.client.accountSid)
       .calls(callSid)
@@ -137,6 +138,7 @@ export class TwilioService {
           ? null
           : 0.0,
       price_unit: fullCall.priceUnit,
+      child_calls: JSON.stringify(childCalls),
       recordings: JSON.stringify(recordings),
       events: JSON.stringify(events),
     } as CallDebugInfo;

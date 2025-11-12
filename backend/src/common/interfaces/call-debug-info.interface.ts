@@ -10,6 +10,7 @@ export interface CallDebugInfo {
   status: string;
   price: number;
   price_unit: string;
+  child_calls: string;
   recordings: string;
   events: string;
 }

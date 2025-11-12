@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const recordings = JSON.parse(data.recordings);
   const events = JSON.parse(data.events);
+  const childCalls = JSON.parse(data.child_calls);
 
   document.getElementById('callSid').innerText = data.callSid;
   document.getElementById('from').innerText = data.from;
@@ -32,6 +33,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('price').innerText = data.price;
   document.getElementById('priceUnit').innerText = data.price_unit;
 
+  if(childCalls.length > 0) {
+    document.getElementById('child-calls').innerHTML = '';
+    for(const childCall of childCalls) {
+      const element = document.createElement('a');
+      element.href = `/call_summary.html?callSid=${childCall.sid}`;
+      element.innerHTML = `${childCall.sid}`;
+      document.getElementById('child-calls').appendChild(element);
+    }
+  }
   if(recordings.length > 0) {
     const element = document.createElement('a');
     element.href = `https:/api.twilio.com/${recordings[0].uri.replace('.json','')}`;
