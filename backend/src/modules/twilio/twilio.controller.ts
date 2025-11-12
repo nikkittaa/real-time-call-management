@@ -36,6 +36,7 @@ import type { TwilioCallEvent } from 'src/common/interfaces/twilio-callevent.int
 import { ConfigService } from '@nestjs/config';
 import { jwt } from 'twilio';
 import * as Twilio from 'twilio';
+import VoiceResponse from 'twilio/lib/twiml/VoiceResponse';
 
 @ApiTags('Twilio')
 @Controller('twilio')
@@ -411,5 +412,18 @@ export class TwilioController {
     );
 
     res.type('text/xml').send(twimlString);
+  }
+
+  @Post('incoming')
+  handleIncoming(@Res() res: Response) {
+    const twiml = new VoiceResponse();
+
+    
+    // Option 2: Connect to an agent (browser or phone)
+    console.log("reached incoming");
+    twiml.dial().client('54228d9e-7d71-4942-bbaa-6461d1a9fd29'); // Browser client identity
+
+    res.type('text/xml');
+    res.send(twiml.toString());
   }
 }

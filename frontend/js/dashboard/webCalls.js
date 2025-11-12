@@ -2,6 +2,7 @@ import { checkAuth, getToken } from './utils.js';
 
 let device;
 let currentCall;
+let initBtn = document.getElementById('initBtn');
 
 async function initTwilio() {
   const user_id = await checkAuth();
@@ -15,15 +16,32 @@ async function initTwilio() {
   });
   const data = await res.json();
 
-  device = new Twilio.Device(data.token);
+  console.log(data);
 
-  device.on('ready', () => (statusDiv.textContent = 'Ready to make calls'));
-  device.on('error', (err) => (statusDiv.textContent = ` Error: ${err.message}`));
+  device = new Twilio.Device(data.token);
+  await device.register();
+  
+  
+  device.on('ready', () => console.log('Twilio Device ready for calls'));
+  device.on('error', err => console.error('Twilio error:', err));
+  device.on('unregistered', () => console.log('Device unregistered'));
+
+
+  device.on('incoming', (call) => {
+    
+    console.log('Incoming call', call);
+    console.log("call params");
+    console.log("params", call.parameters);
+    alert('incoming call , want to accept?');
+    if(confirm('Accept call?')) {
+      call.accept();
+    } else {
+      call.reject();
+    }
+  });
   device.on('disconnect', () => (statusDiv.textContent = 'Call ended'));
   
 }
-
-
 
 async function makeCall() {
     if (!device) return alert('Device not initialized yet.');
@@ -52,4 +70,4 @@ function hangUp() {
 document.getElementById('callButton').addEventListener('click', makeCall);
 document.getElementById('hangupButton').addEventListener('click', hangUp);
 
-initTwilio();
+initBtn.addEventListener('click', initTwilio);
