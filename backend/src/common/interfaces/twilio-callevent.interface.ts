@@ -27,4 +27,5 @@ export interface TwilioCallEvent {
   CalledState: string;
   FromZip: string;
   FromState: string;
+  ParentCallSid: string;
 }

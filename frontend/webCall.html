@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Call</title>
+  <link rel="stylesheet" href="css/webCalls.css">
+</head>
+<body>
+  <h1>Web Call</h1>
+  <a href="dashboard.html">Back to Dashboard</a>
+  
+    <div class="call-section">
+      <input type="text" id="toNumberOutgoing" placeholder="+1123456789">
+      <button id="callButton"> Call</button>
+      <button id="hangupButton"> Hang Up</button>
+      <p id="status"></p>
+    </div>
+</body>
+<script type="module" src="js/twilio.js"></script>
+<script type="module" src="js/dashboard/webCalls.js"></script>
+</html>

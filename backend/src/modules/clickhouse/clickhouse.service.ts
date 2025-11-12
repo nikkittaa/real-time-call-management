@@ -164,11 +164,18 @@ export class ClickhouseService implements OnModuleInit {
     recordingSid: string,
     recordingUrl: string,
   ) {
-    const callData = await this.getCallLog(callSid);
-    callData.recording_sid = recordingSid;
-    callData.recording_url = recordingUrl;
-    await this.insertCallLog(callData);
-    this.logger.info(`Updated recording info for callSid: ${callSid}`);
+    try {
+      const callData = await this.getCallLog(callSid);
+      callData.recording_sid = recordingSid;
+      callData.recording_url = recordingUrl;
+      await this.insertCallLog(callData);
+      this.logger.info(`Updated recording info for callSid: ${callSid}`);
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(
+        `Failed to update recording info. Error: ${err.message}`,
+      );
+    }
   }
 
   async exportCalls(userId: string, exportCallDto: ExportCallDto) {

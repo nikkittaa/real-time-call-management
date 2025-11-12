@@ -17,8 +17,8 @@ export async function checkAuth() {
     if (!res.ok) {
       throw new Error('Invalid token');
     }
-
-    return;
+    const data = await res.json();
+    return data.user_id;
   } catch (err) {
     console.warn('Auth validation failed:', err.message);
     alert('Session expired or invalid. Please log in again.');

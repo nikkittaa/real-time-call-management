@@ -83,7 +83,6 @@ describe('TwilioController', () => {
       updateRecordingInfo: jest.fn(),
       fetchSummary: jest.fn(),
       insertEventLog: jest.fn(),
-      
     };
 
     const mockFirebaseService = {
@@ -184,6 +183,7 @@ describe('TwilioController', () => {
       FromCountry: 'US',
       Caller: '+1234567890',
       AccountSid: 'AC123456789',
+      ParentCallSid: 'CA123456789',
     };
 
     it('should process call event successfully', async () => {

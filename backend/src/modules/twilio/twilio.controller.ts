@@ -8,6 +8,8 @@ import {
   Inject,
   Req,
   Param,
+  Get,
+  Query,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { ClickhouseService } from '../clickhouse/clickhouse.service';
@@ -31,6 +33,9 @@ import {
 import { CallDebugService } from '../callDebug/callDebug.service';
 import type { TwilioRecordingEvent } from 'src/common/interfaces/twilio-recordingevent.interface';
 import type { TwilioCallEvent } from 'src/common/interfaces/twilio-callevent.interface';
+import { ConfigService } from '@nestjs/config';
+import { jwt } from 'twilio';
+import * as Twilio from 'twilio';
 
 @ApiTags('Twilio')
 @Controller('twilio')
@@ -41,6 +46,7 @@ export class TwilioController {
     private twilioService: TwilioService,
     private firebaseService: FirebaseService,
     private callDebugService: CallDebugService,
+    private configService: ConfigService,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly parentLogger: Logger,
   ) {
     this.logger = this.parentLogger.child({ context: 'TwilioController' });
@@ -124,7 +130,7 @@ export class TwilioController {
     const user = userData.val() as { user_id: string } | undefined;
     const userId = user?.user_id;
 
-    await this.firebaseService.write(`calls/${userId}/${body.CallSid}`, {
+    await this.firebaseService.write(`calls/${user?.user_id}/${body.CallSid}`, {
       status: body.CallStatus,
       from_number: body.From,
       to_number: body.To,
@@ -159,7 +165,7 @@ export class TwilioController {
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard('jwt'))
   async startRecording(@Param('callSid') callSid: string) {
-    try{
+    try {
       const res = await this.twilioService.startRecording(callSid);
       await this.clickhouseService.insertEventLog(
         callSid,
@@ -167,17 +173,19 @@ export class TwilioController {
         JSON.stringify(res),
       );
       return res;
-    }catch(error){
+    } catch (error) {
       const err = error as Error;
-      throw new BadRequestException(`Failed to start recording: ${err.message}`);
+      throw new BadRequestException(
+        `Failed to start recording: ${err.message}`,
+      );
     }
-}
+  }
 
-@Post(':callSid/stop-recording')
+  @Post(':callSid/stop-recording')
   @ApiExcludeEndpoint()
   @UseGuards(AuthGuard('jwt'))
   async stopRecording(@Param('callSid') callSid: string) {
-    try{
+    try {
       const res = await this.twilioService.stopRecording(callSid);
       await this.clickhouseService.insertEventLog(
         callSid,
@@ -185,12 +193,11 @@ export class TwilioController {
         JSON.stringify(res),
       );
       return res;
-    }catch(error){
+    } catch (error) {
       const err = error as Error;
       throw new BadRequestException(`Failed to stop recording: ${err.message}`);
     }
   }
-    
 
   @Post('recording-events')
   @ApiExcludeEndpoint()
@@ -202,14 +209,207 @@ export class TwilioController {
       'OK',
     );
 
-    if(body.RecordingStatus === 'completed'){
-       await this.clickhouseService.updateRecordingInfo(
-      CallSid,
-      RecordingSid,
-      RecordingUrl,
-    );
+    if (body.RecordingStatus === 'completed') {
+      await this.clickhouseService.updateRecordingInfo(
+        CallSid,
+        RecordingSid,
+        RecordingUrl,
+      );
     }
-   
+
     return 'OK';
+  }
+
+  @Get('token')
+  @UseGuards(AuthGuard('jwt'))
+  generateToken(@Query('identity') identity: string) {
+    const twilioAccountSid = this.configService.get<string>(
+      'TWILIO_ACCOUNT_SID',
+    ) as string;
+    const twilioApiKey = this.configService.get<string>(
+      'TWILIO_API_KEY',
+    ) as string;
+    const twilioApiSecret = this.configService.get<string>(
+      'TWILIO_API_SECRET',
+    ) as string;
+
+    const AccessToken = jwt.AccessToken;
+    const VoiceGrant = AccessToken.VoiceGrant;
+
+    const voiceGrant = new VoiceGrant({
+      outgoingApplicationSid: this.configService.get<string>(
+        'TWIML_APP_SID_OUTGOING',
+      ) as string,
+      incomingAllow: true,
+    });
+
+    const token = new AccessToken(
+      twilioAccountSid,
+      twilioApiKey,
+      twilioApiSecret,
+      { identity },
+    );
+
+    token.addGrant(voiceGrant);
+
+    return {
+      identity,
+      token: token.toJwt(),
+    };
+  }
+
+  @Post('events-child')
+  @ApiExcludeEndpoint()
+  async handleEventChild(@Body() body: TwilioCallEvent) {
+    const parentCall = await this.firebaseService.read(
+      `calls/${body.ParentCallSid}`,
+    );
+    const parentUser = parentCall.val() as { user_id: string } | undefined;
+    const user = parentUser;
+    const userId = user?.user_id;
+
+    await this.clickhouseService.insertEventLog(
+      body.CallSid,
+      JSON.stringify(body),
+      '',
+    );
+    if (Object.values(CallStatus).includes(body.CallStatus as CallStatus)) {
+      const fullCall = await this.twilioService.fetchFullCallLog(body.CallSid);
+      await this.clickhouseService.insertCallLog({
+        call_sid: fullCall.sid,
+        from_number: fullCall.from,
+        to_number: fullCall.to,
+        status: fullCall.status,
+        duration: Number(fullCall.duration) || 0,
+        start_time: formatDateForClickHouse(fullCall.startTime),
+        end_time: formatDateForClickHouse(fullCall.endTime),
+        user_id: userId,
+      });
+
+      await this.firebaseService.delete(`calls/${body.CallSid}`);
+
+      this.callDebugService.insertCallDebugInfoWithDelay(body.CallSid);
+    }
+  }
+
+  @Post('events-outgoing')
+  @ApiExcludeEndpoint()
+  async handleEventOutgoing(@Body() body: any, @Res() res: Response) {
+    const { From } = body;
+    const user = From.split(':')[1];
+
+    await this.clickhouseService.insertEventLog(
+      body.CallSid,
+      JSON.stringify(body),
+      '',
+    );
+
+    let responseTwiML;
+    if (body.DialCallStatus === 'completed') {
+      responseTwiML = '<Response><Say>Call ended</Say></Response>';
+    } else {
+      responseTwiML =
+        '<Response><Say>Call failed. Please try again later.</Say></Response>';
+    }
+    if (Object.values(CallStatus).includes(body.DialCallStatus as CallStatus)) {
+      setTimeout(() => {
+        void (async () => {
+          const maxRetries = 5;
+          const delay = 5000;
+          const callSid = body.CallSid;
+
+          for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+              const fullCall =
+                await this.twilioService.fetchFullCallLog(callSid);
+              if (
+                fullCall &&
+                fullCall.status &&
+                Object.values(CallStatus).includes(
+                  fullCall.status as CallStatus,
+                )
+              ) {
+                await this.clickhouseService.insertCallLog({
+                  call_sid: fullCall.sid,
+                  from_number: fullCall.from,
+                  to_number: fullCall.to,
+                  status: fullCall.status,
+                  duration: Number(fullCall.duration) || 0,
+                  start_time: formatDateForClickHouse(fullCall.startTime),
+                  end_time: formatDateForClickHouse(fullCall.endTime),
+                  user_id: user,
+                });
+
+                this.callDebugService.insertCallDebugInfoWithDelay(callSid);
+                await this.firebaseService.delete(`calls/${body.CallSid}`);
+
+                this.logger.info(
+                  `Call log successfully inserted for ${callSid} (attempt ${attempt})`,
+                );
+                return;
+              }
+
+              this.logger.warn(
+                ` Call status '${fullCall?.status}' not yet valid for ${callSid}. Attempt ${attempt}/${maxRetries}`,
+              );
+            } catch (error) {
+              this.logger.error(
+                ` Error fetching fullCall for ${callSid} (attempt ${attempt}):`,
+                error,
+              );
+              await this.firebaseService.delete(`calls/${body.CallSid}`);
+            }
+
+            await new Promise((res) => setTimeout(res, delay));
+          }
+
+          this.logger.warn(
+            `Gave up after ${maxRetries} attempts for CallSid ${callSid}`,
+          );
+        })();
+      }, 2000);
+    }
+    res.type('text/xml').send(responseTwiML);
+  }
+
+  @Post('voice-outgoing')
+  @ApiExcludeEndpoint()
+  async voiceResponse(@Req() req: Request, @Res() res: Response) {
+    const callSid = (req.body as unknown as TwilioCallEvent)?.CallSid ?? 'test';
+    const to = (req.body as unknown as TwilioCallEvent)?.To ?? 'test';
+    const userData = (req.body as unknown as TwilioCallEvent)?.From ?? 'test';
+    const userId = userData.split(':')[1];
+    await this.firebaseService.write(`calls/${callSid}`, {
+      user_id: userId,
+    });
+    const twiml = new Twilio.twiml.VoiceResponse();
+
+    const dial = twiml.dial({
+      callerId: this.configService.get<string>('TWILIO_PHONE_NUMBER'),
+      action: `${this.configService.get<string>('PUBLIC_URL')}/twilio/events-outgoing`,
+      record: 'record-from-answer',
+      recordingStatusCallback: `${this.configService.get<string>('PUBLIC_URL')}/twilio/recording-events`,
+      recordingStatusCallbackEvent: ['completed'],
+    });
+
+    dial.number(
+      {
+        statusCallback: `${this.configService.get<string>('PUBLIC_URL')}/twilio/events-child`,
+        statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
+        statusCallbackMethod: 'POST',
+      },
+      to,
+    );
+
+    const twimlString = twiml.toString();
+
+    // Save request and TwiML response to ClickHouse
+    await this.clickhouseService.insertEventLog(
+      callSid,
+      JSON.stringify(req.body),
+      JSON.stringify(twimlString),
+    );
+
+    res.type('text/xml').send(twimlString);
   }
 }

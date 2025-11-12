@@ -39,9 +39,6 @@ export class TwilioService {
       from,
       to,
       statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
-    //  record: true,
-     // recordingStatusCallback: `${this.configService.get<string>('PUBLIC_URL')}/twilio/recording-events`,
-      //recordingStatusCallbackEvent: ['completed'],
       applicationSid: this.configService.get<string>('TWIML_APP_SID'),
     });
 
@@ -54,13 +51,18 @@ export class TwilioService {
 
   async startRecording(callSid: string) {
     try {
-      const recordings = await this.client.calls(callSid).recordings.list({ limit: 1 });
+      const recordings = await this.client
+        .calls(callSid)
+        .recordings.list({ limit: 1 });
 
-      if (recordings.length > 0){
+      if (recordings.length > 0) {
         const recordingSid = recordings[0].sid;
-        await this.client.calls(callSid).recordings(recordingSid).update({ status: 'in-progress' });
+        await this.client
+          .calls(callSid)
+          .recordings(recordingSid)
+          .update({ status: 'in-progress' });
         this.logger.info(`Recording started for callSid: ${callSid}`);
-      }else{
+      } else {
         const recording = await this.client.calls(callSid).recordings.create({
           recordingStatusCallback: `${this.configService.get<string>('PUBLIC_URL')}/twilio/recording-events`,
           recordingStatusCallbackEvent: ['completed'],
@@ -76,14 +78,19 @@ export class TwilioService {
 
   async stopRecording(callSid: string) {
     try {
-      const recordings = await this.client.calls(callSid).recordings.list({ limit: 1 });
+      const recordings = await this.client
+        .calls(callSid)
+        .recordings.list({ limit: 1 });
       if (recordings.length === 0) {
         this.logger.warn(`No active recording found for ${callSid}`);
         return null;
       }
-  
+
       const recordingSid = recordings[0].sid;
-      await this.client.calls(callSid).recordings(recordingSid).update({ status: 'paused' });
+      await this.client
+        .calls(callSid)
+        .recordings(recordingSid)
+        .update({ status: 'paused' });
       this.logger.info(`Recording paused for callSid: ${callSid}`);
       return recordingSid;
     } catch (error) {
@@ -91,7 +98,16 @@ export class TwilioService {
       throw error;
     }
   }
-  
+
+  async endParentCall(callSid: string) {
+    try {
+      await this.client.calls(callSid).update({ status: 'completed' });
+      this.logger.info(`Parent call ended for callSid: ${callSid}`);
+    } catch (error) {
+      this.logger.error(`Failed to end parent call for ${callSid}`, error);
+      throw error;
+    }
+  }
 
   async fetchSummary(callSid: string) {
     this.logger.info(`Fetching summary for callSid: ${callSid}`);
