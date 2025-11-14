@@ -18,10 +18,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
   const recordings = JSON.parse(data.recordings);
-  const events = JSON.parse(data.events);
+  const events = data.events;
+  
   const childCalls = JSON.parse(data.child_calls);
 
-  document.getElementById('callSid').innerText = data.callSid;
+  document.getElementById('callSid').innerText = callSid;
   document.getElementById('from').innerText = data.from;
   document.getElementById('to').innerText = data.to;
   document.getElementById('date').innerText = data.date_created;
@@ -56,10 +57,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     
         const header = document.createElement("p");
         header.classList.add("event-header");
-        if(Object.keys(event.request.parameters).includes("call_status")) {
-          header.innerHTML = `${event.request.method} <span class="call-status">${event.request.parameters.call_status}</span> ${event.request.url}`;
+        if(Object.keys(event.request).includes("call_status")) {
+          header.innerHTML = ` <span class="call-status">${event.request?.call_status}</span> ${event.url}`;
         }else{
-          header.innerHTML = `${event.request.method} ${event.request.url}`;
+          header.innerHTML = `${event.url}`;
         }
 
 
@@ -67,15 +68,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         const details = document.createElement("div");
         details.classList.add("event-details");
         details.innerHTML = `<strong>Request:</strong><br>`;
-       for(const [key, value] of Object.entries(event.request.parameters)) {
-        details.innerHTML += `<strong>${key}:</strong> ${value}<br>`;
-       }
-       details.innerHTML += `<br>`;
-       details.innerHTML += `<strong>Response:</strong><br>`;
       
-       for(const [key, value] of Object.entries(event.response)) {
-        details.innerHTML += `<strong>${key}:</strong> ${escapeHtml(JSON.stringify(value))}<br>`;
+          for(const [key, value] of Object.entries(JSON.parse(event.request))) {
+            details.innerHTML += `<strong>${key}:</strong> ${escapeHtml(JSON.stringify(value))}<br>`;
+           }
+        
+       
+       details.innerHTML += `<br>`;
+       
+      
+       if(event.response){
+        
+          details.innerHTML += `<strong>Response:</strong> ${escapeHtml(JSON.stringify(event.response))}<br>`;
+         
        }
+       
        details.innerHTML += `<br>`;
     
         header.addEventListener("click", () => {

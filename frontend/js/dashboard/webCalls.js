@@ -3,11 +3,16 @@ import { checkAuth, getToken } from './utils.js';
 let device;
 let currentCall;
 let initBtn = document.getElementById('initBtn');
+const statusDiv = document.getElementById('status');
 
 async function initTwilio() {
   const user_id = await checkAuth();
+  
  if(!user_id) return;
-  const statusDiv = document.getElementById('status');
+ initBtn.style.display = 'none';
+ callButton.style.display = 'inline';
+ hangupButton.style.display = 'inline';
+  
 
   const res = await fetch(`http://localhost:3002/twilio/token?identity=${user_id}`, {
     headers: {
@@ -16,31 +21,48 @@ async function initTwilio() {
   });
   const data = await res.json();
 
-  console.log(data);
-
-  device = new Twilio.Device(data.token);
-  await device.register();
-  
-  
-  device.on('ready', () => console.log('Twilio Device ready for calls'));
+  device = new Twilio.Device(data.token, {
+    closeProtection: true,
+    enableRingingState: true
+  });
+ 
+  await device.register();  
+  device.on('registered', () => console.log('Twilio Device ready for calls'));
   device.on('error', err => console.error('Twilio error:', err));
-  device.on('unregistered', () => console.log('Device unregistered'));
 
 
   device.on('incoming', (call) => {
-    
-    console.log('Incoming call', call);
-    console.log("call params");
-    console.log("params", call.parameters);
-    alert('incoming call , want to accept?');
-    if(confirm('Accept call?')) {
+    if(currentCall){
+        call.reject();
+        return;
+    }
+    currentCall = call;
+
+    call.on('disconnect', () => {
+        currentCall = null;
+        statusDiv.textContent = "Call ended";
+      });
+
+    if(confirm(`Accept call from  ${call.parameters.From}?`)) {
       call.accept();
+      statusDiv.textContent = `Connected to ${call.parameters.From}`;
     } else {
       call.reject();
+      currentCall = null;
+      statusDiv.textContent = 'Call ignored';
     }
+
   });
-  device.on('disconnect', () => (statusDiv.textContent = 'Call ended'));
-  
+
+  device.on('tokenWillExpire', async () => {
+    const newRes = await fetch(`http://localhost:3002/twilio/token?identity=${user_id}`, {
+      headers: {
+        'Authorization': `Bearer ${getToken()}`
+      }
+    });
+    const newData = await newRes.json();
+    device.updateToken(newData.token);
+  });
 }
 
 async function makeCall() {
@@ -52,6 +74,12 @@ async function makeCall() {
   
     try {
       currentCall = await device.connect({ params: { To: toNumber } });
+
+      currentCall.on('disconnect', () => {
+        currentCall = null;
+        statusDiv.textContent = 'Call ended';
+      });
+
       document.getElementById('status').textContent = 'Connected';
     } catch (err) {
       document.getElementById('status').textContent = `Error: ${err.message}`;
@@ -65,9 +93,35 @@ function hangUp() {
   } else {
     alert('No active call.');
   }
+  
+}
+
+function ignoreCall() {
+    if(currentCall && currentCall.status() === 'pending'){
+        currentCall.ignore();
+        statusDiv.textContent = 'Call ignored';
+    }else{
+        alert("No call to ignore");
+    }
+}
+
+function muteCall(){
+    if(currentCall){
+        if(currentCall.isMuted()){
+            currentCall.mute(false);
+            statusDiv.textContent = 'Call unmuted';
+        }else{
+            currentCall.mute();
+            statusDiv.textContent = 'Call muted';
+        }
+    }else{
+        alert("No active call to mute");
+    }
 }
 
 document.getElementById('callButton').addEventListener('click', makeCall);
 document.getElementById('hangupButton').addEventListener('click', hangUp);
-
+document.getElementById('ignoreButton').addEventListener('click', ignoreCall);
+document.getElementById('muteCallButton').addEventListener('click', muteCall);
 initBtn.addEventListener('click', initTwilio);
+//initTwilio();

@@ -251,6 +251,43 @@ export class ClickhouseService implements OnModuleInit {
     }
   }
 
+  async insertCallEventLogs(callSid: string, events: string) {
+    try {
+      const eventsList  = JSON.parse(events);
+      for (const event of eventsList) {
+        await this.client.insert({
+          table: 'event_logs',
+          values: [
+            {
+              call_sid: callSid,
+              url: event.request.url,
+              request: JSON.stringify(event.request.parameters),
+              response: JSON.stringify(event.response.response_body),
+            },
+          ],
+          format: 'JSONEachRow',
+        });
+      }
+    }
+    catch (error) {
+      const err = error as Error;
+      this.logger.error(`Failed to insert call event logs. Error: ${err.message}`);
+      throw new InternalServerErrorException('Failed to insert call event logs');
+    }
+  }
+
+  async getCallEventLogs(callSid: string) {
+    const query = `
+      SELECT url, request, response FROM event_logs WHERE call_sid = {callSid:String} ORDER BY created_at ASC`;
+    const resultSet = await this.client.query({
+      query: query,
+      query_params: { callSid },
+      format: 'JSONEachRow',
+    });
+    const result: any[] = await resultSet.json();
+    return result;
+  }
+
   async getAnalytics(userId: string, getCallLogsDto: GetCallLogsDto) {
     const { from, to, phone, status } = getCallLogsDto;
     const conditions: string[] = [];
@@ -338,12 +375,22 @@ export class ClickhouseService implements OnModuleInit {
   }
 
   async insertCallDebugInfo(callDebugInfo: CallDebugInfo) {
+    const debug_info = {
+      callSid: callDebugInfo.callSid,
+      date_created: callDebugInfo.date_created,
+      direction: callDebugInfo.direction,
+      price: callDebugInfo.price,
+      price_unit: callDebugInfo.price_unit,
+      child_calls: callDebugInfo.child_calls,
+      recordings: callDebugInfo.recordings,
+    }
     try {
       await this.client.insert({
-        table: 'calls',
-        values: [callDebugInfo],
+        table: 'debug_info',
+        values: [debug_info],
         format: 'JSONEachRow',
       });
+      await this.insertCallEventLogs(callDebugInfo.callSid, callDebugInfo.events);
       this.logger.info(
         `Inserted call debug info for callSid: ${callDebugInfo.callSid}`,
       );
@@ -357,6 +404,7 @@ export class ClickhouseService implements OnModuleInit {
 
   async insertEventLog(
     callSid: string,
+    url: string,
     eventData: string,
     eventResponse: string,
   ) {
@@ -366,6 +414,7 @@ export class ClickhouseService implements OnModuleInit {
         values: [
           {
             call_sid: callSid,
+            url: url,
             event_data: eventData,
             event_response: eventResponse,
           },
@@ -379,16 +428,51 @@ export class ClickhouseService implements OnModuleInit {
     }
   }
 
-  async fetchSummary(callSid: string) {
+  // async fetchSummary(callSid: string) {
+  //   const query = `
+  //     SELECT * FROM call_debug_info WHERE callSid = '${callSid}'`;
+  //   const resultSet = await this.client.query({
+  //     query: query,
+  //     format: 'JSONEachRow',
+  //   });
+  //   const result: CallDebugInfo[] = await resultSet.json();
+  //   return result[0];
+  // }
+
+  async fetchSummary(callSid: string){
+    const events = await this.getCallEventLogs(callSid);
+    const callData = await this.getCallLog(callSid);
+    
     const query = `
-      SELECT * FROM calls WHERE callSid = '${callSid}'`;
+      SELECT * FROM debug_info WHERE callSid = {callSid:String}
+    `;
     const resultSet = await this.client.query({
       query: query,
+      query_params: { callSid },
       format: 'JSONEachRow',
     });
-    const result: CallDebugInfo[] = await resultSet.json();
-    return result[0];
+    const result: any[] = await resultSet.json();
+    return {
+      from: callData.from_number,
+      to: callData.to_number,
+      date_created: result[0].date_created,
+      start_time: callData.start_time,
+      end_time: callData.end_time,
+      direction: result[0].direction,
+      duration: callData.duration,
+      status: callData.status,
+      price: result[0].price,
+      price_unit: result[0].price_unit,
+      child_calls: result[0].child_calls,
+      recordings: result[0].recordings,
+      events: events,
+
+    }
+    
   }
+
+
+
 
   // CALL NOTES OPERATIONS
   //----------------------------

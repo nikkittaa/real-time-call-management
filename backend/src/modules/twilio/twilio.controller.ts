@@ -117,6 +117,7 @@ export class TwilioController {
 
     await this.clickhouseService.insertEventLog(
       callSid,
+      `${this.configService.get<string>('PUBLIC_URL')}/twilio/voice`,
       JSON.stringify(req.body),
       JSON.stringify(twimlResponse),
     );
@@ -139,6 +140,7 @@ export class TwilioController {
 
     await this.clickhouseService.insertEventLog(
       body.CallSid,
+      `${this.configService.get<string>('PUBLIC_URL')}/twilio/events`,
       JSON.stringify(body),
       '',
     );
@@ -170,6 +172,7 @@ export class TwilioController {
       const res = await this.twilioService.startRecording(callSid);
       await this.clickhouseService.insertEventLog(
         callSid,
+        `${this.configService.get<string>('PUBLIC_URL')}/twilio/start-recording`,
         'Recording started',
         JSON.stringify(res),
       );
@@ -190,6 +193,7 @@ export class TwilioController {
       const res = await this.twilioService.stopRecording(callSid);
       await this.clickhouseService.insertEventLog(
         callSid,
+        `${this.configService.get<string>('PUBLIC_URL')}/twilio/stop-recording`,
         'Recording stopped',
         JSON.stringify(res),
       );
@@ -206,6 +210,7 @@ export class TwilioController {
     const { CallSid, RecordingSid, RecordingUrl } = body;
     await this.clickhouseService.insertEventLog(
       body.CallSid,
+      `${this.configService.get<string>('PUBLIC_URL')}/twilio/recording-events`,
       JSON.stringify(body),
       'OK',
     );
@@ -271,6 +276,7 @@ export class TwilioController {
 
     await this.clickhouseService.insertEventLog(
       body.CallSid,
+      `${this.configService.get<string>('PUBLIC_URL')}/twilio/events-child`,
       JSON.stringify(body),
       '',
     );
@@ -301,6 +307,7 @@ export class TwilioController {
 
     await this.clickhouseService.insertEventLog(
       body.CallSid,
+      `${this.configService.get<string>('PUBLIC_URL')}/twilio/events-outgoing`,
       JSON.stringify(body),
       '',
     );
@@ -323,8 +330,8 @@ export class TwilioController {
             try {
               const fullCall =
                 await this.twilioService.fetchFullCallLog(callSid);
-              if (
-                fullCall &&
+              if 
+                (fullCall &&
                 fullCall.status &&
                 Object.values(CallStatus).includes(
                   fullCall.status as CallStatus,
@@ -404,9 +411,10 @@ export class TwilioController {
 
     const twimlString = twiml.toString();
 
-    // Save request and TwiML response to ClickHouse
+    
     await this.clickhouseService.insertEventLog(
       callSid,
+      `${this.configService.get<string>('PUBLIC_URL')}/twilio/voice-outgoing`,
       JSON.stringify(req.body),
       JSON.stringify(twimlString),
     );
@@ -415,15 +423,131 @@ export class TwilioController {
   }
 
   @Post('incoming')
-  handleIncoming(@Res() res: Response) {
+  async handleIncoming(@Res() res: Response, @Body() body: any) {
     const twiml = new VoiceResponse();
+    twiml.dial({
+      action: `${this.configService.get<string>('PUBLIC_URL')}/twilio/events-incoming-parent`,
+    }).client({
+      statusCallback: `${this.configService.get<string>('PUBLIC_URL')}/twilio/events-incoming`,
+      statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
+      statusCallbackMethod: 'POST',
+    },`${this.configService.get<string>('TEST_USER')}`);
 
-    
-    // Option 2: Connect to an agent (browser or phone)
-    console.log("reached incoming");
-    twiml.dial().client('54228d9e-7d71-4942-bbaa-6461d1a9fd29'); // Browser client identity
+    await this.clickhouseService.insertEventLog(
+      body.CallSid,
+      `${this.configService.get<string>('PUBLIC_URL')}/twilio/incoming`,
+      JSON.stringify(body),
+      JSON.stringify(twiml.toString()),
+    );
 
     res.type('text/xml');
     res.send(twiml.toString());
   }
+
+  @Post('events-incoming')
+  @ApiExcludeEndpoint()
+  async handleEventIncoming(@Body() body: TwilioCallEvent) {
+    await this.clickhouseService.insertEventLog(
+      body.CallSid,
+      `${this.configService.get<string>('PUBLIC_URL')}/twilio/events-incoming`,
+      JSON.stringify(body),
+      '',
+    );
+    
+
+    if (Object.values(CallStatus).includes(body.CallStatus as CallStatus)) {
+      const fullCall = await this.twilioService.fetchFullCallLog(body.CallSid);
+      await this.clickhouseService.insertCallLog({
+        call_sid: fullCall.sid,
+        from_number: fullCall.from,
+        to_number: fullCall.to,
+        status: fullCall.status,
+        duration: Number(fullCall.duration) || 0,
+        start_time: formatDateForClickHouse(fullCall.startTime),
+        end_time: formatDateForClickHouse(fullCall.endTime),
+        user_id: this.configService.get<string>('TEST_USER'),
+      });
+
+      await this.firebaseService.delete(`calls/${body.CallSid}`);
+
+      this.callDebugService.insertCallDebugInfoWithDelay(body.CallSid);
+    }
+
+    return 'Ok';
+  }
+
+  @Post('events-incoming-parent')
+  @ApiExcludeEndpoint()
+  async handleEventIncomingParent(@Body() body: any, @Res() res: Response) {
+    await this.clickhouseService.insertEventLog(
+      body.CallSid,
+      `${this.configService.get<string>('PUBLIC_URL')}/twilio/events-incoming-parent`,
+      JSON.stringify(body),
+      '',
+    );
+
+
+    if (Object.values(CallStatus).includes(body.DialCallStatus as CallStatus)) {
+      setTimeout(() => {
+        void (async () => {
+          const maxRetries = 5;
+          const delay = 5000;
+          const callSid = body.CallSid;
+
+          for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+              const fullCall =
+                await this.twilioService.fetchFullCallLog(callSid);
+              if 
+                (fullCall &&
+                fullCall.status &&
+                Object.values(CallStatus).includes(
+                  fullCall.status as CallStatus,
+                )
+              ) {
+                await this.clickhouseService.insertCallLog({
+                  call_sid: fullCall.sid,
+                  from_number: fullCall.from,
+                  to_number: fullCall.to,
+                  status: fullCall.status,
+                  duration: Number(fullCall.duration) || 0,
+                  start_time: formatDateForClickHouse(fullCall.startTime),
+                  end_time: formatDateForClickHouse(fullCall.endTime),
+                  user_id: this.configService.get<string>('TEST_USER'),
+                });
+
+                this.callDebugService.insertCallDebugInfoWithDelay(callSid);
+                await this.firebaseService.delete(`calls/${body.CallSid}`);
+
+                this.logger.info(
+                  `Call log successfully inserted for ${callSid} (attempt ${attempt})`,
+                );
+                return;
+              }
+
+              this.logger.warn(
+                ` Call status '${fullCall?.status}' not yet valid for ${callSid}. Attempt ${attempt}/${maxRetries}`,
+              );
+            } catch (error) {
+              this.logger.error(
+                ` Error fetching fullCall for ${callSid} (attempt ${attempt}):`,
+                error,
+              );
+              await this.firebaseService.delete(`calls/${body.CallSid}`);
+            }
+
+            await new Promise((res) => setTimeout(res, delay));
+          }
+
+          this.logger.warn(
+            `Gave up after ${maxRetries} attempts for CallSid ${callSid}`,
+          );
+        })();
+      }, 2000);
+    }
+    
+    return res.type('text/xml').send('<Response><Say>Call ended</Say></Response>');
+  }
+
+
 }

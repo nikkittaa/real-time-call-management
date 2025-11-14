@@ -61,6 +61,7 @@
   #callButton {
     background-color: #4caf50;
     color: white;
+    display: none;
   }
   
  
@@ -68,6 +69,7 @@
   #hangupButton {
     background-color: #e53935;
     color: white;
+    display: none;
   }
   
   
