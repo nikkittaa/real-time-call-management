@@ -486,75 +486,46 @@ export class TwilioController {
 
   @Post('events-incoming-parent')
   @ApiExcludeEndpoint()
-  async handleEventIncomingParent(@Body() body: any, @Res() res: Response) {
+  async handleIncomingActionUrl(@Body() body: any, @Res() res: Response) {
     await this.clickhouseService.insertEventLog(
       body.CallSid,
       `${this.configService.get<string>('PUBLIC_URL')}/twilio/events-incoming-parent`,
       JSON.stringify(body),
-      '',
+      '<Response><Say>Call ended</Say></Response>',
     );
 
-    if (Object.values(CallStatus).includes(body.DialCallStatus as CallStatus)) {
-      setTimeout(() => {
-        void (async () => {
-          const maxRetries = 5;
-          const delay = 5000;
-          const callSid = body.CallSid;
-
-          for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-              const fullCall =
-                await this.twilioService.fetchFullCallLog(callSid);
-              if (
-                fullCall &&
-                fullCall.status &&
-                Object.values(CallStatus).includes(
-                  fullCall.status as CallStatus,
-                )
-              ) {
-                await this.clickhouseService.insertCallLog({
-                  call_sid: fullCall.sid,
-                  from_number: fullCall.from,
-                  to_number: fullCall.to,
-                  status: fullCall.status,
-                  duration: Number(fullCall.duration) || 0,
-                  start_time: formatDateForClickHouse(fullCall.startTime),
-                  end_time: formatDateForClickHouse(fullCall.endTime),
-                  user_id: this.configService.get<string>('TEST_USER'),
-                });
-
-                this.callDebugService.insertCallDebugInfoWithDelay(callSid);
-                await this.firebaseService.delete(`calls/${body.CallSid}`);
-
-                this.logger.info(
-                  `Call log successfully inserted for ${callSid} (attempt ${attempt})`,
-                );
-                return;
-              }
-
-              this.logger.warn(
-                ` Call status '${fullCall?.status}' not yet valid for ${callSid}. Attempt ${attempt}/${maxRetries}`,
-              );
-            } catch (error) {
-              this.logger.error(
-                ` Error fetching fullCall for ${callSid} (attempt ${attempt}):`,
-                error,
-              );
-              await this.firebaseService.delete(`calls/${body.CallSid}`);
-            }
-
-            await new Promise((res) => setTimeout(res, delay));
-          }
-
-          this.logger.warn(
-            `Gave up after ${maxRetries} attempts for CallSid ${callSid}`,
-          );
-        })();
-      }, 2000);
-    }
 
     return res
       .type('text/xml')
       .send('<Response><Say>Call ended</Say></Response>');
+  }
+
+  @Post('events-incoming-parent-end')
+  @ApiExcludeEndpoint()
+  async handleEventIncomingParentEnd(@Body() body: any) {
+    await this.clickhouseService.insertEventLog(
+      body.CallSid,
+      `${this.configService.get<string>('PUBLIC_URL')}/twilio/events-incoming-parent-end`,
+      JSON.stringify(body),
+      '',
+    );
+
+    if (Object.values(CallStatus).includes(body.CallStatus as CallStatus)) {
+      const fullCall = await this.twilioService.fetchFullCallLog(body.CallSid);
+      await this.clickhouseService.insertCallLog({
+        call_sid: fullCall.sid,
+        from_number: fullCall.from,
+        to_number: fullCall.to,
+        status: fullCall.status,
+        duration: Number(fullCall.duration) || 0,
+        start_time: formatDateForClickHouse(fullCall.startTime),
+        end_time: formatDateForClickHouse(fullCall.endTime),
+        user_id: this.configService.get<string>('TEST_USER'),
+      });
+
+      this.callDebugService.insertCallDebugInfoWithDelay(body.CallSid);
+    }
+
+    return 'Ok';
   }
 }

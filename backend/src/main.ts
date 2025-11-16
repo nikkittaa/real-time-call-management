@@ -29,7 +29,7 @@ async function bootstrap() {
     .setTitle('Real-time Call Management API')
     .setDescription('API documentation for Real-time Call Management System')
     .setVersion('1.0')
-    .addBearerAuth() // optional — adds Authorization header field
+    .addBearerAuth() 
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -41,7 +41,7 @@ async function bootstrap() {
       whitelist: true, // strips unknown fields
       transform: true, // auto-transforms payloads to DTO instances
       transformOptions: {
-        enableImplicitConversion: true, // auto-converts types (e.g., string → number)
+        enableImplicitConversion: true,
       },
     }),
   );
