@@ -1,25 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Web Call</title>
-  <link rel="stylesheet" href="css/webCalls.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Web Call Dialer</title>
+  <link rel="stylesheet" href="css/webCalls.css" />
 </head>
 <body>
-  <h1>Web Call</h1>
-  <a href="dashboard.html">Back to Dashboard</a>
-    <div class="call-section">
-      <input type="text" id="toNumberOutgoing" placeholder="+1123456789">
-      <button id="initBtn"> Initialize</button>
-      <button id="callButton"> Call</button>
-      <button id="hangupButton"> Hang Up</button>
-      <button id = "ignoreButton"> Ignore call </button>
-      <button id = "muteCallButton">Mute Call</button>
-      
-      <p id="status"></p>
+  <div class="dialer-container">
+    <h1>Web Dialer</h1>
+    <a href="dashboard.html" class="back-link">Back to Dashboard</a>
+
+    <div class="incoming-banner hidden" id="incomingBanner">
+      <p id="incomingNumber">Incoming call...</p>
+      <div class="incoming-actions">
+        <button id="acceptBtn" class="btn accept">Accept</button>
+        <button id="rejectBtn" class="btn reject">Reject</button>
+      </div>
     </div>
+
+    <div class="call-actions">
+      <button id="initBtn" class="btn init">Initialize</button>
+      <button id="hangupButton" class="btn hangup">Hang Up</button>
+      <button id="muteCallButton" class="btn mute">Mute</button>
+    </div>
+
+    <p id="status" class="status"></p>
+
+    <div class="number-pad">
+      <input type="text" id="toNumberOutgoing" placeholder="Enter number" class="input-number" />
+      <div class="pad-grid">
+        <button class="pad-btn">1</button>
+        <button class="pad-btn">2</button>
+        <button class="pad-btn">3</button>
+        <button class="pad-btn">4</button>
+        <button class="pad-btn">5</button>
+        <button class="pad-btn">6</button>
+        <button class="pad-btn">7</button>
+        <button class="pad-btn">8</button>
+        <button class="pad-btn">9</button>
+        <button class="pad-btn">+</button>
+        <button class="pad-btn">0</button>
+        <button class="pad-btn">#</button>
+      </div>
+      <button id="callButton" class="btn call">Call</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/twilio.js"></script>
+  <script type="module" src="js/dashboard/webCalls.js"></script>
+
 </body>
-<script type="module" src="js/twilio.js"></script>
-<script type="module" src="js/dashboard/webCalls.js"></script>
 </html>

@@ -330,8 +330,8 @@ export class TwilioController {
             try {
               const fullCall =
                 await this.twilioService.fetchFullCallLog(callSid);
-              if 
-                (fullCall &&
+              if (
+                fullCall &&
                 fullCall.status &&
                 Object.values(CallStatus).includes(
                   fullCall.status as CallStatus,
@@ -411,7 +411,6 @@ export class TwilioController {
 
     const twimlString = twiml.toString();
 
-    
     await this.clickhouseService.insertEventLog(
       callSid,
       `${this.configService.get<string>('PUBLIC_URL')}/twilio/voice-outgoing`,
@@ -425,13 +424,23 @@ export class TwilioController {
   @Post('incoming')
   async handleIncoming(@Res() res: Response, @Body() body: any) {
     const twiml = new VoiceResponse();
-    twiml.dial({
-      action: `${this.configService.get<string>('PUBLIC_URL')}/twilio/events-incoming-parent`,
-    }).client({
-      statusCallback: `${this.configService.get<string>('PUBLIC_URL')}/twilio/events-incoming`,
-      statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
-      statusCallbackMethod: 'POST',
-    },`${this.configService.get<string>('TEST_USER')}`);
+    twiml
+      .dial({
+        action: `${this.configService.get<string>('PUBLIC_URL')}/twilio/events-incoming-parent`,
+      })
+      .client(
+        {
+          statusCallback: `${this.configService.get<string>('PUBLIC_URL')}/twilio/events-incoming`,
+          statusCallbackEvent: [
+            'initiated',
+            'ringing',
+            'answered',
+            'completed',
+          ],
+          statusCallbackMethod: 'POST',
+        },
+        `${this.configService.get<string>('TEST_USER')}`,
+      );
 
     await this.clickhouseService.insertEventLog(
       body.CallSid,
@@ -453,7 +462,6 @@ export class TwilioController {
       JSON.stringify(body),
       '',
     );
-    
 
     if (Object.values(CallStatus).includes(body.CallStatus as CallStatus)) {
       const fullCall = await this.twilioService.fetchFullCallLog(body.CallSid);
@@ -486,7 +494,6 @@ export class TwilioController {
       '',
     );
 
-
     if (Object.values(CallStatus).includes(body.DialCallStatus as CallStatus)) {
       setTimeout(() => {
         void (async () => {
@@ -498,8 +505,8 @@ export class TwilioController {
             try {
               const fullCall =
                 await this.twilioService.fetchFullCallLog(callSid);
-              if 
-                (fullCall &&
+              if (
+                fullCall &&
                 fullCall.status &&
                 Object.values(CallStatus).includes(
                   fullCall.status as CallStatus,
@@ -545,9 +552,9 @@ export class TwilioController {
         })();
       }, 2000);
     }
-    
-    return res.type('text/xml').send('<Response><Say>Call ended</Say></Response>');
+
+    return res
+      .type('text/xml')
+      .send('<Response><Say>Call ended</Say></Response>');
   }
-
-
 }

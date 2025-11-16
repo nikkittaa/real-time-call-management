@@ -57,8 +57,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
         const header = document.createElement("p");
         header.classList.add("event-header");
-        if(Object.keys(event.request).includes("call_status")) {
-          header.innerHTML = ` <span class="call-status">${event.request?.call_status}</span> ${event.url}`;
+        if(Object.keys(JSON.parse(event.request)).includes("call_status")) {
+          header.innerHTML = `<span class="call-status">${JSON.parse(event.request)?.call_status}</span> ${event.url}`;
         }else{
           header.innerHTML = `${event.url}`;
         }

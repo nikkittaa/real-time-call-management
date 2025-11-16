@@ -253,7 +253,7 @@ export class ClickhouseService implements OnModuleInit {
 
   async insertCallEventLogs(callSid: string, events: string) {
     try {
-      const eventsList  = JSON.parse(events);
+      const eventsList = JSON.parse(events);
       for (const event of eventsList) {
         await this.client.insert({
           table: 'event_logs',
@@ -268,11 +268,14 @@ export class ClickhouseService implements OnModuleInit {
           format: 'JSONEachRow',
         });
       }
-    }
-    catch (error) {
+    } catch (error) {
       const err = error as Error;
-      this.logger.error(`Failed to insert call event logs. Error: ${err.message}`);
-      throw new InternalServerErrorException('Failed to insert call event logs');
+      this.logger.error(
+        `Failed to insert call event logs. Error: ${err.message}`,
+      );
+      throw new InternalServerErrorException(
+        'Failed to insert call event logs',
+      );
     }
   }
 
@@ -383,14 +386,17 @@ export class ClickhouseService implements OnModuleInit {
       price_unit: callDebugInfo.price_unit,
       child_calls: callDebugInfo.child_calls,
       recordings: callDebugInfo.recordings,
-    }
+    };
     try {
       await this.client.insert({
         table: 'debug_info',
         values: [debug_info],
         format: 'JSONEachRow',
       });
-      await this.insertCallEventLogs(callDebugInfo.callSid, callDebugInfo.events);
+      await this.insertCallEventLogs(
+        callDebugInfo.callSid,
+        callDebugInfo.events,
+      );
       this.logger.info(
         `Inserted call debug info for callSid: ${callDebugInfo.callSid}`,
       );
@@ -439,10 +445,10 @@ export class ClickhouseService implements OnModuleInit {
   //   return result[0];
   // }
 
-  async fetchSummary(callSid: string){
+  async fetchSummary(callSid: string) {
     const events = await this.getCallEventLogs(callSid);
     const callData = await this.getCallLog(callSid);
-    
+
     const query = `
       SELECT * FROM debug_info WHERE callSid = {callSid:String}
     `;
@@ -466,13 +472,8 @@ export class ClickhouseService implements OnModuleInit {
       child_calls: result[0].child_calls,
       recordings: result[0].recordings,
       events: events,
-
-    }
-    
+    };
   }
-
-
-
 
   // CALL NOTES OPERATIONS
   //----------------------------
