@@ -29,7 +29,7 @@ async function bootstrap() {
     .setTitle('Real-time Call Management API')
     .setDescription('API documentation for Real-time Call Management System')
     .setVersion('1.0')
-    .addBearerAuth() 
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

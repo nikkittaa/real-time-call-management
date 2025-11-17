@@ -4,54 +4,105 @@ import { TwilioService } from '../twilio/twilio.service';
 import { ClickhouseService } from '../clickhouse/clickhouse.service';
 import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { CloudTasksClient, protos } from '@google-cloud/tasks';
+import { ConfigService } from '@nestjs/config';
+import { formatDateForClickHouse } from 'src/utils/formatDatefoClickhouse';
+import { CallStatus } from 'src/common/enums/call-status.enum';
+import { CallEnqueDto } from './dto/call-enque.dto';
 
 @Injectable()
 export class CallDebugService {
   private readonly logger: Logger;
+  private client = new CloudTasksClient({
+    keyFilename: 'call-management-478506-caef08d2ae2e.json',
+  });
+
   constructor(
     private readonly twilioService: TwilioService,
     private readonly clickhouseService: ClickhouseService,
+    private readonly configService: ConfigService,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly parentLogger: Logger,
   ) {
     this.logger = this.parentLogger.child({ context: 'CallDebugService' });
   }
 
-  insertCallDebugInfoWithDelay(callSid: string) {
-    const initialDelay = 10000;
+  async insertCallDebugInfoWithDelay(callEnqueDto: CallEnqueDto) {
+    const { callSid, userId } = callEnqueDto;
+    try {
+      const fullCall = await this.twilioService.fetchFullCallLog(callSid);
 
-    setTimeout(() => {
-      // immediately invoked async function
-      void (async () => {
-        const maxRetries = 5;
-        const delay = 5000;
+      if (
+        !fullCall ||
+        !Object.values(CallStatus).includes(fullCall.status as CallStatus)
+      ) {
+        this.logger.warn(`Call ${callSid} not found or status invalid`);
+        return {
+          ok: false,
+          message: 'Call not found or status invalid -  retry cloud tasks',
+        };
+      }
 
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-          try {
-            const callSummary = await this.twilioService.fetchSummary(callSid);
+      await this.clickhouseService.insertCallLog({
+        call_sid: fullCall.sid,
+        from_number: fullCall.from,
+        to_number: fullCall.to,
+        status: fullCall.status,
+        duration: Number(fullCall.duration) || 0,
+        start_time: formatDateForClickHouse(fullCall.startTime),
+        end_time: formatDateForClickHouse(fullCall.endTime),
+        user_id: userId,
+      });
 
-            if (callSummary.price != null) {
-              await this.clickhouseService.insertCallDebugInfo(callSummary);
-              this.logger.info(`Call summary inserted for callSid: ${callSid}`);
-              return;
-            }
+      const callSummary = await this.twilioService.fetchSummary(callSid);
 
-            this.logger.warn(
-              `Price not yet available for ${callSid}. Attempt ${attempt}/${maxRetries}`,
-            );
-          } catch (error) {
-            this.logger.error(
-              `Error fetching call summary for ${callSid}:`,
-              error,
-            );
-          }
+      if (callSummary.price === null) {
+        this.logger.warn(`Call summary not ready for ${callSid}, retrying...`);
+        return {
+          ok: false,
+          message:
+            'Call summary not ready - retry cloud tasks',
+        };
+      }
 
-          await new Promise((res) => setTimeout(res, delay));
-        }
+      await this.clickhouseService.insertCallDebugInfo(callSummary);
 
-        this.logger.warn(
-          `Failed to get complete summary for ${callSid} after ${maxRetries} attempts.`,
-        );
-      })();
-    }, initialDelay);
+      this.logger.info(`Call summary inserted: ${callSid}`);
+      return { ok: true, message: 'Call summary inserted' };
+    } catch (error) {
+      this.logger.error('Error processing call debug info:', error);
+      return {
+        ok: false,
+        message: 'Error processing call debug info - retry cloud tasks',
+      };
+    }
+  }
+
+  async enqueueCall(callSid: string, userId: string) {
+    this.logger.info(`Enqueuing call ${callSid}`);
+    const project = 'call-management-478506';
+    const queue = 'call-logs-queue';
+    const location = 'asia-south1';
+    const url =
+      this.configService.get<string>('PUBLIC_URL') +
+      '/call-debug/process-call-logs';
+
+    const parent = this.client.queuePath(project, location, queue);
+    const callLogsTask = {
+      httpRequest: {
+        httpMethod: protos.google.cloud.tasks.v2.HttpMethod.POST,
+        url,
+        headers: { 'Content-Type': 'application/json' },
+        body: Buffer.from(JSON.stringify({ callSid, userId })).toString(
+          'base64',
+        ),
+      },
+    };
+
+    const response = await this.client.createTask({
+      parent,
+      task: callLogsTask,
+    });
+    this.logger.info(`Enqueued call ${callSid} `);
+    return response;
   }
 }

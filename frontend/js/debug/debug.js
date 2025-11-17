@@ -57,32 +57,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     
         const header = document.createElement("p");
         header.classList.add("event-header");
-        if(Object.keys(JSON.parse(event.request)).includes("call_status")) {
-          header.innerHTML = `<span class="call-status">${JSON.parse(event.request)?.call_status}</span> ${event.url}`;
-        }else{
-          header.innerHTML = `${event.url}`;
-        }
-
-
-       
+        header.innerHTML = `${event.url}`;
         const details = document.createElement("div");
         details.classList.add("event-details");
         details.innerHTML = `<strong>Request:</strong><br>`;
       
-          for(const [key, value] of Object.entries(JSON.parse(event.request))) {
-            details.innerHTML += `<strong>${key}:</strong> ${escapeHtml(JSON.stringify(value))}<br>`;
-           }
+        for(const [key, value] of Object.entries(JSON.parse(event.request))) {
+          details.innerHTML += `<strong>${key}:</strong> ${escapeHtml(JSON.stringify(value))}<br>`;
+        }
         
        
        details.innerHTML += `<br>`;
-       
       
        if(event.response){
-        
           details.innerHTML += `<strong>Response:</strong> ${escapeHtml(JSON.stringify(event.response))}<br>`;
-         
        }
-       
        details.innerHTML += `<br>`;
     
         header.addEventListener("click", () => {

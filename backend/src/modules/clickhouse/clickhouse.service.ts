@@ -17,6 +17,8 @@ import { ConfigService } from '@nestjs/config';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { CallDebugInfo } from 'src/common/interfaces/call-debug-info.interface';
+import { DebugInfo } from 'src/common/interfaces/debug-info.interface';
+import { TwilioRequestEvents } from 'src/common/interfaces/twilio-request-events.interface';
 
 @Injectable()
 export class ClickhouseService implements OnModuleInit {
@@ -253,7 +255,9 @@ export class ClickhouseService implements OnModuleInit {
 
   async insertCallEventLogs(callSid: string, events: string) {
     try {
-      const eventsList = JSON.parse(events);
+      const eventsList: TwilioRequestEvents[] = JSON.parse(
+        events,
+      ) as TwilioRequestEvents[];
       for (const event of eventsList) {
         await this.client.insert({
           table: 'event_logs',
@@ -287,8 +291,9 @@ export class ClickhouseService implements OnModuleInit {
       query_params: { callSid },
       format: 'JSONEachRow',
     });
-    const result: any[] = await resultSet.json();
-    return result;
+    const result: { url: string; request: string; response: string }[] =
+      await resultSet.json();
+    return result as { url: string; request: string; response: string }[];
   }
 
   async getAnalytics(userId: string, getCallLogsDto: GetCallLogsDto) {
@@ -457,7 +462,12 @@ export class ClickhouseService implements OnModuleInit {
       query_params: { callSid },
       format: 'JSONEachRow',
     });
-    const result: any[] = await resultSet.json();
+    const result: DebugInfo[] = await resultSet.json();
+
+    if (result.length == 0) {
+      return null;
+    }
+
     return {
       from: callData.from_number,
       to: callData.to_number,
