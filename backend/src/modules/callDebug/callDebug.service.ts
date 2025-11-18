@@ -1,4 +1,3 @@
-// src/modules/call-debug/call-debug.service.ts
 import { Inject, Injectable } from '@nestjs/common';
 import { TwilioService } from '../twilio/twilio.service';
 import { ClickhouseService } from '../clickhouse/clickhouse.service';
@@ -9,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { formatDateForClickHouse } from 'src/utils/formatDatefoClickhouse';
 import { CallStatus } from 'src/common/enums/call-status.enum';
 import { CallEnqueDto } from './dto/call-enque.dto';
+import { TwilioRequestEvents } from 'src/common/interfaces/twilio-request-events.interface';
 
 @Injectable()
 export class CallDebugService {
@@ -50,17 +50,26 @@ export class CallDebugService {
         duration: Number(fullCall.duration) || 0,
         start_time: formatDateForClickHouse(fullCall.startTime),
         end_time: formatDateForClickHouse(fullCall.endTime),
+        direction: fullCall.direction,
         user_id: userId,
       });
 
       const callSummary = await this.twilioService.fetchSummary(callSid);
+      if (fullCall.to === '') {
+        const events = JSON.parse(callSummary.events) as TwilioRequestEvents[];
+        const to = events[0].request.parameters.to ?? '';
+        if (to) {
+          await this.clickhouseService.updateCallLog(callSid, {
+            to_number: to,
+          });
+        }
+      }
 
       if (callSummary.price === null) {
         this.logger.warn(`Call summary not ready for ${callSid}, retrying...`);
         return {
           ok: false,
-          message:
-            'Call summary not ready - retry cloud tasks',
+          message: 'Call summary not ready - retry cloud tasks',
         };
       }
 

@@ -107,6 +107,8 @@ body {
     font-weight: 500;
     color: #0263e0;
     margin: 0;
+    display: flex;
+    justify-content: space-between;
   }
   
   .event-details {
@@ -118,9 +120,62 @@ body {
     font-family: monospace;
     white-space: pre-wrap;
     overflow-x: auto;
+    line-height: 1.5;
   }
 
   .call-status{
     color: rgb(0, 116, 0);
     text-transform: uppercase;
   }
+
+
+.response-body {
+  background: #ffffff;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 14px;
+  overflow-y: auto;
+}
+
+.event-subheading{
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+
+#xml-output-container {
+  white-space: pre-wrap; /* Ensures newlines are respected */
+  font-family: monospace;
+  background: #282c34; /* Dark background like a code editor */
+  color: #abb2bf; /* Default text color */
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.xml-tag-name {
+  color: #e06c75;
+}
+
+
+
+.xml-equals {
+  color: #abb2bf;
+}
+
+.xml-attr-value {
+  color: #d19a66; 
+}
+
+.xml-comment-or-declaration {
+  color: #5c6370; 
+  font-style: italic;
+}
+
+.xml-bracket {
+  color: #56b6c2;
+}

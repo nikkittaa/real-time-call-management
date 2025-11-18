@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Body,
   Controller,
-  Delete,
   Get,
   Inject,
   Param,
@@ -242,25 +241,5 @@ export class CallController {
       notes: notes,
     };
     return this.callService.updateCallNotes(createNotesDto);
-  }
-
-  @Delete('/:id/notes')
-  @ApiOperation({ summary: 'Delete call notes' })
-  @ApiParam({ name: 'id', description: 'Call SID', example: 'CA1234567890' })
-  @ApiResponse({
-    status: 200,
-    description: 'Call notes deleted successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        updated: { type: 'boolean', example: true },
-        message: { type: 'string', example: 'Note deleted successfully' },
-      },
-    },
-  })
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
-  async deleteCallNotes(@Param('id') id: string) {
-    return this.callService.deleteCallNotes(id);
   }
 }

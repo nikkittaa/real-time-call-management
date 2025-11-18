@@ -60,4 +60,40 @@ export class GetCallLogsDto {
     message: `Status must be one of: ${Object.values(CallStatus).join(', ')}`,
   })
   status?: CallStatus;
+
+  @ApiProperty({
+    description: 'Direction',
+    example: 'inbound',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  direction?: string;
+
+  @ApiProperty({
+    description: 'Notes',
+    example: 'Note',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  notes?: string;
+
+  @ApiProperty({
+    description: 'Sort column',
+    example: 'start_time',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  sort?: string;
+
+  @ApiProperty({
+    description: 'Sort direction',
+    example: 'asc',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  sort_direction?: string;
 }

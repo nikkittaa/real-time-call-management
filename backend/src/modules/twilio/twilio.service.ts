@@ -99,16 +99,6 @@ export class TwilioService {
     }
   }
 
-  async endParentCall(callSid: string) {
-    try {
-      await this.client.calls(callSid).update({ status: 'completed' });
-      this.logger.info(`Parent call ended for callSid: ${callSid}`);
-    } catch (error) {
-      this.logger.error(`Failed to end parent call for ${callSid}`, error);
-      throw error;
-    }
-  }
-
   async fetchSummary(callSid: string) {
     this.logger.info(`Fetching summary for callSid: ${callSid}`);
     const fullCall = await this.fetchFullCallLog(callSid);

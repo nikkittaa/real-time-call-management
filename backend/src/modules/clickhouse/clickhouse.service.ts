@@ -67,6 +67,7 @@ export class ClickhouseService implements OnModuleInit {
       argMax(to_number, created_at) as to_number, 
       argMax(status,  created_at) as status,
       argMax(duration, created_at) as duration,
+      argMax(direction, created_at) as direction,
       argMax(start_time, created_at) as start_time,
       argMax(end_time, created_at) as end_time ,
       argMax(notes, created_at) as notes,
@@ -94,8 +95,32 @@ export class ClickhouseService implements OnModuleInit {
     }
   }
 
+  async updateCallLog(callSid: string, updateData: { to_number: string }) {
+    try {
+      const callData = await this.getCallLog(callSid);
+      callData.to_number = updateData.to_number;
+      await this.insertCallLog(callData);
+      this.logger.info(`Updated call log for callSid: ${callSid}`);
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`Failed to update call log. Error: ${err.message}`);
+      throw new InternalServerErrorException('Failed to update call log');
+    }
+  }
+
   async getFilteredCalls(userId: string, getCallLogsDto: GetCallLogsDto) {
-    const { page, limit, from, to, phone, status } = getCallLogsDto;
+    const {
+      page,
+      limit,
+      from,
+      to,
+      phone,
+      status,
+      direction,
+      notes,
+      sort,
+      sort_direction,
+    } = getCallLogsDto;
     const offset = (page - 1) * limit;
     const conditions: string[] = [];
 
@@ -120,6 +145,16 @@ export class ClickhouseService implements OnModuleInit {
       conditions.push(`status = '${status}'`);
     }
 
+    // Direction filter
+    if (direction) {
+      conditions.push(`direction LIKE '%${direction}%'`);
+    }
+
+    // Notes filter
+    if (notes) {
+      conditions.push(`notes LIKE '%${notes}%'`);
+    }
+
     const whereClause = conditions.length
       ? ` HAVING ${conditions.join(' AND ')}`
       : '';
@@ -135,11 +170,12 @@ export class ClickhouseService implements OnModuleInit {
         argMax(end_time, created_at) AS end_time,
         argMax(notes, created_at) AS notes,
         argMax(recording_sid, created_at) AS recording_sid,
-        argMax(recording_url, created_at) AS recording_url
+        argMax(recording_url, created_at) AS recording_url,
+        argMax(direction, created_at) AS direction
       FROM call_logs
       GROUP BY call_sid
       ${whereClause}
-      ORDER BY argMax(start_time, created_at) as start_time DESC
+      ORDER BY argMax(${sort}, created_at) as ${sort} ${sort_direction}
       LIMIT {limit:UInt64} OFFSET {offset:UInt64}
     `;
 
@@ -181,7 +217,7 @@ export class ClickhouseService implements OnModuleInit {
   }
 
   async exportCalls(userId: string, exportCallDto: ExportCallDto) {
-    const { from, to, phone, status } = exportCallDto;
+    const { from, to, phone, status, direction, notes } = exportCallDto;
     const conditions: string[] = [];
     conditions.push(`argMax(user_id, created_at) = '${userId}'`);
 
@@ -204,6 +240,16 @@ export class ClickhouseService implements OnModuleInit {
       conditions.push(`status = '${status}'`);
     }
 
+    // Direction filter
+    if (direction) {
+      conditions.push(`direction LIKE '%${direction}%'`);
+    }
+
+    // Notes filter
+    if (notes) {
+      conditions.push(`notes LIKE '%${notes}%'`);
+    }
+
     const whereClause = conditions.length
       ? ` HAVING ${conditions.join(' AND ')}`
       : '';
@@ -214,12 +260,14 @@ export class ClickhouseService implements OnModuleInit {
         argMax(from_number, created_at) AS from_number, 
         argMax(to_number, created_at) AS to_number, 
         argMax(status, created_at) AS status,
+        argMax(direction, created_at) AS direction
         argMax(duration, created_at) AS duration,
         argMax(start_time, created_at) AS start_time,
         argMax(end_time, created_at) AS end_time,
         argMax(notes, created_at) AS notes,
         argMax(recording_sid, created_at) AS recording_sid,
-        argMax(recording_url,created_at) AS recording_url
+        argMax(recording_url,created_at) AS recording_url,
+        
       FROM call_logs
       GROUP BY call_sid
       ${whereClause}
@@ -329,7 +377,8 @@ export class ClickhouseService implements OnModuleInit {
       SELECT
         call_sid,
         argMax(duration, created_at) AS duration,
-        argMax(status, created_at) AS status
+        argMax(status, created_at) AS status,
+        argMax(direction, created_at) AS direction
       FROM call_logs
       GROUP BY call_sid
        ${whereClause}
@@ -372,6 +421,27 @@ export class ClickhouseService implements OnModuleInit {
     });
 
     const statusData = await statusResultSet.json();
+
+    const callDivisionQuery = `
+      SELECT
+        direction,
+        COUNT(*) AS count
+      FROM (${baseSubquery}) AS t
+      GROUP BY direction
+    `;
+    const callDivisionResultSet = await this.client.query({
+      query: callDivisionQuery,
+      format: 'JSONEachRow',
+    });
+    const callDivisionData = await callDivisionResultSet.json();
+
+    const callDivision = callDivisionData.map(
+      (item: { direction: string; count: number }) => ({
+        direction: item.direction,
+        count: item.count,
+      }),
+    );
+
     this.logger.info(`Analytics fetched for user: ${userId}`);
 
     return {
@@ -379,6 +449,7 @@ export class ClickhouseService implements OnModuleInit {
       avg_duration: Math.round(Number(totals[0].avg_duration || 0)),
       success_rate: Math.round(Number(totals[0].success_rate || 0)),
       status_distribution: statusData, // [{ status: 'completed', count: 123 }, ...]
+      call_division: callDivision,
     };
   }
 
@@ -514,15 +585,6 @@ export class ClickhouseService implements OnModuleInit {
     this.logger.info(`Updated call notes for callSid: ${callSid}`);
     return { updated: true, message: 'Note updated successfully' };
   }
-
-  async deleteCallNotes(callSid: string) {
-    const callData = await this.getCallLog(callSid);
-    callData.notes = '';
-    await this.insertCallLog(callData);
-    this.logger.info(`Deleted call notes for callSid: ${callSid}`);
-    return { updated: true, message: 'Note deleted successfully' };
-  }
-
   // USER OPERATIONS
   //---------------------------
   async getUserById(userId: string) {

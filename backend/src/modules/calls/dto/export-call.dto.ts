@@ -44,4 +44,22 @@ export class ExportCallDto {
     message: `Status must be one of: ${Object.values(CallStatus).join(', ')}`,
   })
   status?: CallStatus;
+
+  @ApiProperty({
+    description: 'Direction',
+    example: 'inbound',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  direction?: string;
+
+  @ApiProperty({
+    description: 'Notes',
+    example: 'Note',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  notes?: string;
 }

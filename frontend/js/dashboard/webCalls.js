@@ -16,7 +16,6 @@ const statusDiv = document.getElementById('status');
 const incomingBanner = document.getElementById('incomingBanner');
 const incomingNumber = document.getElementById('incomingNumber');
 
-
 callBtn.style.display = "none";
 hangupBtn.style.display = "none";
 muteBtn.style.display = "none";
@@ -66,7 +65,7 @@ async function initTwilio() {
 
     call.on("disconnect", () => {
       currentCall = null;
-      statusDiv.textContent = "Call ended";
+      statusDiv.textContent = "Call ended where";
       incomingBanner.classList.add("hidden");
       hideActiveCallButtons();
     });
@@ -84,6 +83,8 @@ async function initTwilio() {
 async function makeCall() {
   if (!device) return alert("Device not initialized.");
 
+  if (!isValidE164(numberInput.value)) return alert("Invalid phone number.");
+
   const toNumber = numberInput.value;
   if (!toNumber) return alert("Enter a phone number.");
 
@@ -94,13 +95,28 @@ async function makeCall() {
 
     showActiveCallButtons();
 
-    currentCall.on("disconnect", () => {
+    currentCall.on("ringing", () => {
+      statusDiv.textContent = "Ringing...";
+    });
+
+    currentCall.on("connected", () => {
+      statusDiv.textContent = "Connected";
+    });
+
+    currentCall.on("error", (error) => {
+      statusDiv.textContent = `Error: ${error.message}`;
+    });
+
+    currentCall.on("reject", () => {
+      statusDiv.textContent = "Call rejected";
+    });
+
+    currentCall.on("disconnect", (call) => {
       currentCall = null;
-      statusDiv.textContent = "Call ended";
+      statusDiv.textContent = ``;
       hideActiveCallButtons();
     });
 
-    statusDiv.textContent = "Connected";
   } catch (err) {
     statusDiv.textContent = `Error: ${err.message}`;
   }
@@ -157,13 +173,23 @@ function hideActiveCallButtons() {
   muteBtn.textContent = "Mute";
 }
 
+function isValidE164(number) {
+  const regex = /^\+[1-9]\d{1,14}$/;
+  return regex.test(number);
+}
+
+function handleInputChange() {
+  callBtn.disabled = !isValidE164(numberInput.value);
+}
 
 document.querySelectorAll('.pad-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       numberInput.value += btn.textContent.trim();
+      callBtn.disabled = !isValidE164(numberInput.value);
     });
   });
 
+numberInput.addEventListener("input", handleInputChange);
 initBtn.addEventListener("click", initTwilio);
 callBtn.addEventListener("click", makeCall);
 hangupBtn.addEventListener("click", hangUp);

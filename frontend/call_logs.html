@@ -12,18 +12,17 @@
     
     <h1>Your Call Logs</h1>
     <div id="callLogsContainer"></div>
-<div class="pagination">
-  <button id="prevPage">Previous</button>
-  <span id="pageInfo"></span>
-  <button id="nextPage">Next</button>
-</div>
+
 
 <div class="filters">
+  <label>Limit</label>
+  <input type="number" id="limit" value="5">
   <label for="fromDate">From Date</label>
   <input type="date" id="fromDate">
   <label for="toDate">To Date</label>
   <input type="date" id="toDate">
   <input type="text" id="phoneNumber" placeholder="Phone Number (e.g. +123456789)">
+  <input type = "text" id = "notes" placeholder=" Search Notes">
   
   <select id="status">
     <option value="">All Status</option>
@@ -32,6 +31,11 @@
     <option value="busy">Busy</option>
     <option value="no-answer">No Answer</option>
     <option value="canceled">Canceled</option>
+  </select>
+  <select id="direction">
+    <option value="">All Direction</option>
+    <option value="inbound">Inbound</option>
+    <option value="outbound">Outbound</option>
   </select>
   
   <button id="applyFilters">Apply Filters</button>
@@ -46,14 +50,27 @@
           <th>From</th>
           <th>To</th>
           <th>Status</th>
-          <th>Duration</th>
-          <th>Start Time</th>
-          <th>End Time</th>
+          <th>Direction</th>
+          <th>
+            Start Time
+            <button class="sort-btn" id ="start_time">⇅</button>
+          </th>
+    
+          <th>
+            End Time
+            <button class="sort-btn" id ="end_time">⇅</button>
+          </th>
           <th>Notes</th>
         </tr>
       </thead>
       <tbody id="callLogsBody"></tbody>
-    </table>   
+    </table>  
+    
+    <div class="pagination">
+      <button id="prevPage">Previous</button>
+      <span id="pageInfo"></span>
+      <button id="nextPage">Next</button>
+    </div>
   </div>
   <script type = "module" src="js/call_logs/callLogs.js"></script>
 </body>

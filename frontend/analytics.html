@@ -50,11 +50,17 @@
       <h3>Success Rate</h3>
       <p id="successRate">--</p>
     </div>
+
   </div>
 
   <div class="charts">
-    <canvas id="statusChart" width="400" height="400"></canvas>
+    <div class="chart-container">
+      <canvas id="statusChart"></canvas>
     </div>
+    <div class="chart-container">
+      <canvas id="callDivisionChart"></canvas>
+    </div>
+  </div>
 
   <!-- External JS -->
   <script type="module" src="js/analytics/analytics.js"></script>

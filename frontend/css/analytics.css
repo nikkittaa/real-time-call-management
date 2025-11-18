@@ -17,7 +17,7 @@ body {
     letter-spacing: 0.5px;
   }
   
-  /* === Dashboard Card Section === */
+  
   .dashboard {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -54,11 +54,24 @@ body {
   .charts {
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     flex-wrap: wrap;
-    gap: 2rem;
-    max-width: 1000px;
+    gap: 1.5rem;
     margin-inline: auto;
+    margin-top: 1rem;
+  }
+  
+  .chart-container {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1rem;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    max-width: 450px;
+    width: 100%;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
   
   canvas {
@@ -66,8 +79,9 @@ body {
     box-shadow: none;
     border-radius: 0;
     padding: 0;
-    max-width: 500px;
+    max-width: 100%;
     width: 100%;
+    height: auto !important;
   }
   
   /* === Responsive Design === */
@@ -82,6 +96,16 @@ body {
   
     .card p {
       font-size: 1.5rem;
+    }
+
+    .charts {
+      gap: 1rem;
+      flex-direction: column;
+    }
+
+    .chart-container {
+      height: 350px;
+      max-width: 100%;
     }
   }
   

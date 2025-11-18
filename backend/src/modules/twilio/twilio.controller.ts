@@ -214,6 +214,9 @@ export class TwilioController {
   }
 
   @Get('token')
+  @ApiOperation({ summary: 'Generate a token' })
+  @ApiResponse({ status: 200, description: 'Token generated successfully' })
+  @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   generateToken(@Query('identity') identity: string) {
     const twilioAccountSid = this.configService.get<string>(
@@ -260,19 +263,19 @@ export class TwilioController {
     const parentUser = parentCall.val() as { user_id: string } | undefined;
     const user = parentUser;
     const userId = user?.user_id;
-    console.log('hereeeee ', userId);
     await this.clickhouseService.insertEventLog(
       body.CallSid,
       `${this.configService.get<string>('PUBLIC_URL')}/twilio/events-child`,
       JSON.stringify(body),
-      '',
+      'Ok',
     );
     if (Object.values(CallStatus).includes(body.CallStatus as CallStatus)) {
-
       await this.callDebugService.enqueueCall(body.CallSid, userId ?? '');
       await this.firebaseService.delete(`calls/${body.CallSid}`);
       await this.firebaseService.delete(`calls/${body.ParentCallSid}`);
     }
+
+    return 'OK';
   }
 
   @Post('events-outgoing')
@@ -289,7 +292,10 @@ export class TwilioController {
     );
 
     let responseTwiML;
-    if (body.DialCallStatus === 'completed') {
+    if (
+      body.DialCallStatus === 'completed' ||
+      body.DialCallStatus === 'no-answer'
+    ) {
       responseTwiML = '<Response><Say>Call ended</Say></Response>';
     } else {
       responseTwiML =
@@ -343,6 +349,7 @@ export class TwilioController {
   }
 
   @Post('incoming')
+  @ApiExcludeEndpoint()
   async handleIncoming(@Res() res: Response, @Body() body: TwilioCallEvent) {
     const twiml = new VoiceResponse();
     twiml

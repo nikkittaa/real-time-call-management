@@ -1,5 +1,5 @@
 import { getToken } from './utils.js';
-import { viewNote, editNote, deleteNote } from './notes.js';
+import { viewNote, editNote } from './notes.js';
 import { checkAuth } from '../dashboard/utils.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -11,6 +11,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   await checkAuth();
 
+  let sortConfig = {
+    column: 'start_time',
+    direction: 'desc'
+  }
+
+  document.getElementById('start_time').addEventListener('click', () => {
+    sortConfig.column = 'start_time';
+    sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
+    fetchLogs();
+  });
+
+  document.getElementById('end_time').addEventListener('click', () => {
+    sortConfig.column = 'end_time';
+    sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
+    fetchLogs();
+  });
+
   const tableBody = document.getElementById('callLogsBody');
   const prevBtn = document.getElementById('prevPage');
   const nextBtn = document.getElementById('nextPage');
@@ -20,9 +37,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   const toDate = document.getElementById('toDate');
   const phone = document.getElementById('phoneNumber');
   const status = document.getElementById('status');
+  const direction = document.getElementById('direction');
+  const notes = document.getElementById('notes');
   const applyBtn = document.getElementById('applyFilters');
   const clearBtn = document.getElementById('clearFilters');
   const exportBtn = document.getElementById('exportCalls');
+  const limit = document.getElementById('limit');
+  const today = new Date().toISOString().split('T')[0];
+  fromDate.setAttribute('max', today);
+  toDate.setAttribute('max', today);
 
   exportBtn.addEventListener('click', async () => {
     const params = new URLSearchParams({});
@@ -31,7 +54,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       params.append('from', new Date(fromDate.value).toISOString());
     }
     if (toDate.value) {
-      params.append('to', new Date(toDate.value).toISOString());
+      const d = new Date(toDate.value);
+      d.setDate(d.getDate() + 1); 
+      params.append('to', d.toISOString());
     }
     
     if (phone.value) {
@@ -40,6 +65,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (status.value) {
       params.append('status', status.value);
+    }
+
+   
+    if (direction.value) {
+      params.append('direction', direction.value);
+    }
+
+    if (notes.value) {
+      params.append('notes', notes.value);
     }
 
     const res = await fetch(`http://localhost:3002/calls/export?${params.toString()}`, {
@@ -54,22 +88,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   let page = 1;
-  const limit = 5;
 
   async function fetchLogs() {
     try {
-      tableBody.innerHTML = `<tr><td colspan="8">Loading...</td></tr>`;
-
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: limit.toString(),
+        limit: limit.value.toString(),
+        sort: sortConfig.column,
+        sort_direction: sortConfig.direction,
       });
+
 
       if (fromDate.value) {
         params.append('from', new Date(fromDate.value).toISOString());
       }
       if (toDate.value) {
-        params.append('to', new Date(toDate.value).toISOString());
+        const d = new Date(toDate.value);
+        d.setDate(d.getDate() + 1); 
+        params.append('to', d.toISOString());
+      }
+
+      if(fromDate.value && toDate.value){
+        if(new Date(fromDate.value) > new Date(toDate.value)){
+          alert('From date must be before to date');
+          fromDate.value = '';
+          toDate.value = '';
+          return;
+        }
       }
 
       if (phone.value) {
@@ -79,6 +124,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (status.value) {
         params.append('status', status.value);
       }
+
+      if (direction.value) {
+        params.append('direction', direction.value);
+      }
+
+      if (notes.value) {
+        params.append('notes', notes.value);
+      }
+
 
       const res = await fetch(
         `http://localhost:3002/calls?${params.toString()}`,
@@ -103,11 +157,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       data.forEach((log) => {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td><a href="/call_summary.html?callSid=${log.call_sid}" target="_self">${log.call_sid}</a></td>
+          <td><a href="/call_summary.html?callSid=${log.call_sid}" target="_blank">${log.call_sid}</a></td>
           <td>${log.from_number}</td>
           <td>${log.to_number}</td>
           <td>${log.status}</td>
-          <td>${log.duration}</td>
+          <td>${log.direction}</td>
           <td>${new Date(log.start_time).toLocaleString()}</td>
           <td>${new Date(log.end_time).toLocaleString()}</td>
           <td>
@@ -115,15 +169,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="note-buttons">
               <button class="view">View</button>
               <button class="edit">Edit</button>
-              <button class="delete">Delete</button>
             </div>
           </td>
         `;
 
         row.querySelector('.view').onclick = () => viewNote(log.call_sid);
         row.querySelector('.edit').onclick = () => editNote(log.call_sid);
-        row.querySelector('.delete').onclick = () => deleteNote(log.call_sid);
-
         tableBody.appendChild(row);
       });
 
@@ -159,7 +210,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     toDate.value = '';
     phone.value = '';
     status.value = '';
+    direction.value = '';
     page = 1;
+    limit.value = 5;
+    notes.value = '';
     fetchLogs();
   });
 
