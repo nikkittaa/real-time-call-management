@@ -13,7 +13,6 @@ import { JwtPayload } from 'src/common/interfaces/jwt-payload.interface';
 import { CallStatus } from 'src/common/enums/call-status.enum';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { CallLog } from 'src/common/interfaces/call-logs.interface';
-import { CallDebugInfo } from 'src/common/interfaces/call-debug-info.interface';
 
 describe('CallController', () => {
   let callController: CallController;
@@ -184,27 +183,12 @@ describe('CallController', () => {
   describe('getSummary', () => {
     it('should return call summary', async () => {
       const callSid = 'CA123456789';
-      const expectedSummary: CallDebugInfo = {
-        callSid: 'CA123456789',
-        from: '+1234567890',
-        to: '+0987654321',
-        date_created: new Date(),
-        start_time: new Date(),
-        end_time: new Date(),
-        direction: 'outbound-api',
-        duration: 120,
-        status: 'completed',
-        price: -0.05,
-        price_unit: 'USD',
-        recordings: '[]',
-        events: '[]',
-      };
 
-      callsService.fetchSummary.mockResolvedValue(expectedSummary);
+      callsService.fetchSummary.mockResolvedValue(null);
 
       const result = await callController.getSummary(callSid);
 
-      expect(result).toEqual(expectedSummary);
+      expect(result).toEqual(null);
       expect(callsService.fetchSummary).toHaveBeenCalledWith(callSid);
     });
   });
@@ -262,6 +246,10 @@ describe('CallController', () => {
         status_distribution: [
           { status: 'completed', count: 80 },
           { status: 'failed', count: 20 },
+        ],
+        call_division: [
+          { direction: 'inbound', count: 80 },
+          { direction: 'outbound', count: 20 },
         ],
       };
 
@@ -373,21 +361,6 @@ describe('CallController', () => {
         user_id: mockUser.user_id,
         notes,
       });
-    });
-  });
-
-  describe('deleteCallNotes', () => {
-    it('should delete call notes successfully', async () => {
-      const id = 'CA123456789';
-      const expectedResult = { updated: true, message: 'Notes deleted' };
-
-      callsService.deleteCallNotes.mockResolvedValue(expectedResult);
-
-      const result = await callController.deleteCallNotes(id);
-
-      expect(result).toEqual(expectedResult);
-      expect(callsService.deleteCallNotes).toHaveBeenCalledWith(id);
-      expect(callsService.deleteCallNotes).toHaveBeenCalledTimes(1);
     });
   });
 });

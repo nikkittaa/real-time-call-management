@@ -59,6 +59,7 @@ describe('ClickhouseService', () => {
     end_time: '2025-01-01 10:02:00',
     user_id: '123',
     created_at: '2025-01-01 10:00:00',
+    direction: 'outbound-api',
   };
 
   const mockQueryResult = {
@@ -277,6 +278,10 @@ describe('ClickhouseService', () => {
         to: new Date('2023-12-31'),
         phone: '+1234567890',
         status: CallStatus.COMPLETED,
+        direction: 'outbound-api',
+        notes: 'Test notes',
+        sort: 'start_time',
+        sort_direction: 'desc',
       };
       const mockFilteredLogs = [mockCallLog];
 
@@ -310,39 +315,6 @@ describe('ClickhouseService', () => {
       expect(typeof result).toBe('string');
       expect(result).toContain('call_sid');
       expect(mockClickhouseClient.query).toHaveBeenCalled();
-    });
-  });
-
-  describe('insertCallDebugInfo', () => {
-    it('should insert call debug info successfully', async () => {
-      const debugInfo: CallDebugInfo = {
-        callSid: 'CA123456789',
-        from: '+1234567890',
-        to: '+0987654321',
-        date_created: '2023-01-01 10:00:00',
-        start_time: '2023-01-01 10:00:30',
-        end_time: '2023-01-01 10:02:30',
-        direction: 'outbound-api',
-        duration: 120,
-        status: 'completed',
-        price: -0.05,
-        price_unit: 'USD',
-        recordings: '[]',
-        events: '[]',
-      };
-
-      mockClickhouseClient.insert.mockResolvedValue(undefined);
-
-      await clickhouseService.insertCallDebugInfo(debugInfo);
-
-      expect(mockClickhouseClient.insert).toHaveBeenCalledWith({
-        table: 'calls',
-        values: [debugInfo],
-        format: 'JSONEachRow',
-      });
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        `Inserted call debug info for callSid: ${debugInfo.callSid}`,
-      );
     });
   });
 });

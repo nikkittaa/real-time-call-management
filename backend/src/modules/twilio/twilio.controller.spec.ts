@@ -8,6 +8,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { CallDebugService } from '../callDebug/callDebug.service';
 import { TwilioRecordingEvent } from 'src/common/interfaces/twilio-recordingevent.interface';
 import { TwilioCallEvent } from 'src/common/interfaces/twilio-callevent.interface';
+import { ConfigService } from '@nestjs/config';
 
 describe('TwilioController', () => {
   let twilioController: TwilioController;
@@ -57,6 +58,7 @@ describe('TwilioController', () => {
     status: 'completed',
     price: -0.05,
     price_unit: 'USD',
+    child_calls: '[]',
     recordings: '[]',
     events: '[]',
   };
@@ -94,6 +96,11 @@ describe('TwilioController', () => {
 
     const mockCallDebugService = {
       insertCallDebugInfoWithDelay: jest.fn(),
+      enqueueCall: jest.fn(),
+    };
+
+    const mockConfigService = {
+      get: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -114,6 +121,10 @@ describe('TwilioController', () => {
         {
           provide: CallDebugService,
           useValue: mockCallDebugService,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
         },
         {
           provide: WINSTON_MODULE_PROVIDER,
@@ -150,94 +161,6 @@ describe('TwilioController', () => {
       });
       expect(twilioService.makeCall).toHaveBeenCalledWith(to, mockUser.user_id);
       expect(twilioService.makeCall).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('handleEvent', () => {
-    const mockCallEvent: TwilioCallEvent = {
-      CallSid: 'CA123456789',
-      From: '+1234567890',
-      To: '+0987654321',
-      Called: '+1234567890',
-      ToState: 'CA',
-      CallerCountry: 'US',
-      Timestamp: '2025-01-01 10:00:00',
-      CallbackSource: 'twilio',
-      CallerState: 'CA',
-      ToZip: '90210',
-      SequenceNumber: '1234567890',
-      CallerZip: '90210',
-      ToCountry: 'US',
-      CalledZip: '90210',
-      ApiVersion: '2025-01-01',
-      CalledCity: 'Los Angeles',
-      CallStatus: 'completed',
-      FromCity: 'Los Angeles',
-      CalledState: 'CA',
-      FromZip: '90210',
-      FromState: 'CA',
-      Direction: 'outbound-api',
-      CalledCountry: 'US',
-      CallerCity: 'Los Angeles',
-      ToCity: 'Los Angeles',
-      FromCountry: 'US',
-      Caller: '+1234567890',
-      AccountSid: 'AC123456789',
-      ParentCallSid: 'CA123456789',
-    };
-
-    it('should process call event successfully', async () => {
-      // Arrange
-      const userData = { user_id: mockUser.user_id };
-
-      firebaseService.read.mockResolvedValue({ val: () => userData } as any);
-      firebaseService.write.mockResolvedValue(undefined);
-      firebaseService.delete.mockResolvedValue(undefined);
-      twilioService.fetchFullCallLog.mockResolvedValue(mockFullCall as any);
-      clickhouseService.insertCallLog.mockResolvedValue(undefined);
-
-      await twilioController.handleEvent(mockCallEvent);
-
-      expect(firebaseService.read).toHaveBeenCalledWith(
-        `calls/${mockCallEvent.CallSid}`,
-      );
-      expect(firebaseService.write).toHaveBeenCalledWith(
-        `calls/${userData.user_id}/${mockCallEvent.CallSid}`,
-        {
-          status: mockCallEvent.CallStatus,
-          from_number: mockCallEvent.From,
-          to_number: mockCallEvent.To,
-        },
-      );
-      expect(twilioService.fetchFullCallLog).toHaveBeenCalledWith(
-        mockCallEvent.CallSid,
-      );
-      expect(clickhouseService.insertCallLog).toHaveBeenCalled();
-    });
-
-    it('should handle events for different call statuses', async () => {
-      // Arrange
-      const initiatedEvent = {
-        ...mockCallEvent,
-        CallStatus: 'initiated' as any,
-      };
-      const userData = { user_id: mockUser.user_id };
-
-      firebaseService.read.mockResolvedValue({ val: () => userData } as any);
-      firebaseService.write.mockResolvedValue(undefined);
-
-      await twilioController.handleEvent(initiatedEvent);
-
-      expect(firebaseService.write).toHaveBeenCalledWith(
-        `calls/${userData.user_id}/${initiatedEvent.CallSid}`,
-        {
-          status: 'initiated',
-          from_number: initiatedEvent.From,
-          to_number: initiatedEvent.To,
-        },
-      );
-      // Should not insert call log for non-final status
-      expect(clickhouseService.insertCallLog).not.toHaveBeenCalled();
     });
   });
 

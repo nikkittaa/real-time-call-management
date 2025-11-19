@@ -37,6 +37,10 @@ describe('CallsService', () => {
       { status: 'completed', count: 8 },
       { status: 'failed', count: 2 },
     ],
+    call_division: [
+      { direction: 'inbound', count: 8 },
+      { direction: 'outbound', count: 2 },
+    ],
   };
 
   beforeEach(async () => {
@@ -101,22 +105,6 @@ describe('CallsService', () => {
         createNotesDto,
       );
       expect(clickhouseService.updateCallNotes).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('deleteCallNotes', () => {
-    it('should delete call notes successfully', async () => {
-      const expectedResult = { updated: true, message: 'Notes deleted' };
-
-      clickhouseService.deleteCallNotes.mockResolvedValue(expectedResult);
-
-      const result = await callsService.deleteCallNotes(mockCallSid);
-
-      expect(result).toEqual(expectedResult);
-      expect(clickhouseService.deleteCallNotes).toHaveBeenCalledWith(
-        mockCallSid,
-      );
-      expect(clickhouseService.deleteCallNotes).toHaveBeenCalledTimes(1);
     });
   });
 

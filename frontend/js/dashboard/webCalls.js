@@ -53,7 +53,9 @@ async function initTwilio() {
 
   
   device.on("incoming", (call) => {
+    console.log("Incoming call");
     if (currentCall) {
+      console.log("Rejecting call because current call is already active");
       call.reject();
       return;
     }
@@ -65,7 +67,7 @@ async function initTwilio() {
 
     call.on("disconnect", () => {
       currentCall = null;
-      statusDiv.textContent = "Call ended where";
+      statusDiv.textContent = "Call ended";
       incomingBanner.classList.add("hidden");
       hideActiveCallButtons();
     });
@@ -96,10 +98,13 @@ async function makeCall() {
     showActiveCallButtons();
 
     currentCall.on("ringing", () => {
-      statusDiv.textContent = "Ringing...";
+      statusDiv.textContent = "Call initiated";
     });
 
-    currentCall.on("connected", () => {
+    
+
+    currentCall.on("connect", () => {
+      console.log("Call connected");
       statusDiv.textContent = "Connected";
     });
 

@@ -13,6 +13,7 @@ export interface CallLog {
   created_at?: Date | string | null;
   recording_sid?: string;
   recording_url?: string;
+  direction?: string;
 }
 
 export class CallLogResponse implements CallLog {
@@ -54,4 +55,7 @@ export class CallLogResponse implements CallLog {
     example: 'https://api.twilio.com/recording.mp3',
   })
   recording_url?: string;
+
+  @ApiProperty({ description: 'Direction', example: 'outbound-api' })
+  direction?: string;
 }

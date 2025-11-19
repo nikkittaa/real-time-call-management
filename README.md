@@ -15,11 +15,13 @@ A comprehensive real-time call management application built with modern technolo
 - **📱 Real-time Updates** - Live call status updates using Server-Sent Events (SSE)
 
 ### Analytics & Reporting  
-- **📈 Dashboard** - Interactive dashboard with call metrics
+- **📈 Dashboard** - Interactive dashboard with call metrics and pie charts
 - **📊 Advanced Analytics** - Call duration, success rates, and trend analysis
 - **📤 Data Export** - Export call logs to CSV format
-- **🔍 Advanced Filtering** - Filter calls by date range, status, and phone numbers
+- **🔍 Advanced Filtering** - Filter calls by date range, status, and phone numbers  
 - **📋 Call Summary** - Detailed call debug information and summaries
+- **🎯 Visual Analytics** - Interactive pie charts for call status and direction distribution
+- **📅 Date Range Analytics** - Configurable date filtering with validation
 
 ### Technical Features
 - **⚡ Real-time Data** - Firebase integration for live data synchronization
@@ -27,6 +29,10 @@ A comprehensive real-time call management application built with modern technolo
 - **🔒 Security** - JWT authentication, request validation, and secure endpoints
 - **📖 API Documentation** - Swagger/OpenAPI integration
 - **🐳 Containerization** - Docker support for easy deployment
+- **🧪 Comprehensive Testing** - Unit tests, integration tests, and E2E testing
+- **⚙️ Background Processing** - Google Cloud Tasks for async call processing
+- **📊 Type Safety** - Full TypeScript implementation with strict typing
+- **🔄 Error Handling** - Graceful error handling with retry mechanisms
 
 ## 🏗️ Technology Stack
 
@@ -125,8 +131,11 @@ real-time-call-management/
 │   │   │   │       └── create-user.dto.ts
 │   │   │   │
 │   │   │   ├── 📂 callDebug/          # Call debugging module
-│   │   │   │   ├── callDebug.service.ts
-│   │   │   │   └── callDebug.module.ts
+│   │   │   │   ├── callDebug.controller.ts # Cloud tasks webhook endpoints
+│   │   │   │   ├── callDebug.service.ts    # Background call processing
+│   │   │   │   ├── callDebug.module.ts     # Call debug module config
+│   │   │   │   └── 📂 dto/                 # Data Transfer Objects
+│   │   │   │       └── call-enque.dto.ts
 │   │   │   │
 │   │   │   └── 📂 logger/             # Logging module
 │   │   │       └── logger.module.ts
@@ -138,9 +147,9 @@ real-time-call-management/
 │   │       └── formatDatefoClickhouse.ts
 │   │
 │   ├── 📂 test/                       # Test files
-│   │   ├── app.e2e-spec.ts  
-|   |   |__ call-management.e2e.spec.ts        
-│   │   └── jest-e2e.json          
+│   │   ├── app.e2e-spec.ts            # Application E2E tests
+│   │   ├── call-management.e2e-spec.ts # Call management E2E tests      
+│   │   ├── jest-e2e.json              # E2E test configuration
 │   │
 │   ├── 📄 package.json                # NPM dependencies and scripts
 │   ├── 📄 package-lock.json          # Dependency lock file
@@ -255,6 +264,12 @@ FIREBASE_CLIENT_EMAIL=your-service-account@project.iam.gserviceaccount.com
 # Application Configuration
 NODE_ENV=development
 PORT=3002
+
+#GOOGLE CLOUD TASKS CONFIGURATION
+GOOGLE_CLOUD_KEY_FILE=file_name
+GOOGLE_CLOUD_PROJECT_ID=name_of_project_id
+GOOGLE_CLOUD_QUEUE=queue_name
+GOOGLE_CLOUD_LOCATION=region
 ```
 
 ### 3. Firebase Setup
@@ -350,22 +365,52 @@ POST   /twilio/events      # Twilio webhook for call events
 POST   /twilio/recording-events  # Recording status updates
 ```
 
+#### Call Debug Processing
+```http
+POST   /call-debug/process-call-logs  # Process call logs via Cloud Tasks
+```
+
 #### Call Notes
 ```http
 GET    /calls/:callSid/notes    # Get call notes  
 PATCH  /calls/:id/notes         # Update call notes
-DELETE /calls/:id/notes         # Delete call notes
 ```
 
 
 
+## 🧪 Testing
+
+This project includes comprehensive testing with Jest and NestJS testing utilities.
+
+### Running Tests
+
+```bash
+# Run unit tests
+npm run test
+
+# Run E2E tests
+npm run test:e2e
+
+```
+
 ### Test Categories
 
-- **Unit Tests:** Individual component testing
+- **Unit Tests:** Individual component and service testing 
 - **E2E Tests:** Full application flow testing including:
   - Authentication flows
   - Call management operations
   - Security validation
+  - API endpoint testing
+
+### Test Coverage
+
+Our test suite covers:
+- **Controllers:** API endpoint behavior and error handling
+- **Services:** Business logic and data processing
+- **Authentication:** JWT validation and security
+- **Database Operations:** ClickHouse queries and Firebase operations
+- **External API Integration:** Twilio service mocking
+- **Background Processing:** Cloud Tasks queue operations
  
 
 ## 📚 API Documentation
@@ -407,19 +452,48 @@ const analytics = await fetch('/calls/analytics', {
 ```
 
 
-## Security Considerations
+## 🔒 Security Considerations
 
-- **JWT Authentication:** Secure token-based authentication
-- **Input Validation:** Request validation using class-validator
-- **CORS Configuration:** Proper cross-origin resource sharing
-- **Environment Variables:** Sensitive data stored securely
+### Authentication & Authorization
+- **JWT Authentication:** Secure token-based authentication with configurable expiration
+- **Bearer Token:** API endpoints protected with Authorization headers
+- **User Context:** All operations scoped to authenticated users
 
-## Monitoring & Logging
+### Data Protection
+- **Input Validation:** Request validation using class-validator decorators
+- **SQL Injection Prevention:** Parameterized queries in ClickHouse operations
+- **CORS Configuration:** Proper cross-origin resource sharing setup
+- **Environment Variables:** Sensitive data stored securely in .env files
+
+### API Security
+- **Error Handling:** Structured error responses without sensitive data exposure
+- **Request Logging:** Comprehensive logging for security monitoring
+- **Rate Limiting:** Configurable through reverse proxy or application level
+- **HTTPS Enforcement:** SSL/TLS encryption for production deployments
+
+### Infrastructure Security
+- **Service Account Keys:** Firebase and Google Cloud credentials properly managed
+- **Database Access:** Restricted database connections and credentials
+- **Container Security:** Docker images with minimal attack surface
+
+## 📊 Monitoring & Logging
 
 ### Logging Features
-- **Structured Logging:** logs with Winston
-- **Log Levels:** Debug, info, warn, error classification
-- **Context Logging:** Request correlation and tracing
+- **Structured Logging:** Comprehensive logs with Winston logger
+- **Log Levels:** Debug, info, warn, error classification with appropriate routing
+- **Context Logging:** Request correlation and tracing with module-specific contexts
+- **Error Tracking:** Detailed error logging with stack traces and context
+
+### Performance Monitoring
+- **Database Query Performance:** ClickHouse query execution monitoring
+- **API Response Times:** Request/response duration tracking
+- **Memory Usage:** Application memory footprint monitoring
+- **Background Job Status:** Cloud Tasks queue processing monitoring
+
+### Health Checks
+- **Application Health:** `/health` endpoint for service status
+- **Database Connectivity:** ClickHouse and Firebase connection verification
+- **External Service Health:** Twilio API connectivity checks
 
 
 ### Development Setup

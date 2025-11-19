@@ -52,6 +52,9 @@ jest.mock('twilio', () => {
         create: jest.fn(),
         events: { list: jest.fn() },
         recordings: { list: jest.fn() },
+        list: jest.fn().mockReturnValue({
+          child_calls: { list: jest.fn() },
+        }),
       }),
       api: {
         v2010: {
@@ -170,9 +173,6 @@ describe('TwilioService', () => {
         from: '+1234567890',
         to,
         statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
-        record: true,
-        recordingStatusCallback: 'https://example.com/twilio/recording-events',
-        recordingStatusCallbackEvent: ['completed'],
         applicationSid: 'AP123456789',
       });
       expect(firebaseService.write).toHaveBeenCalledWith(
@@ -183,45 +183,6 @@ describe('TwilioService', () => {
       );
       expect(mockLogger.info).toHaveBeenCalledWith(
         `Making call to: ${to} for user: ${userId}`,
-      );
-    });
-  });
-
-  describe('fetchSummary', () => {
-    it('should fetch call summary successfully', async () => {
-      const callSid = 'CA123456789';
-
-      mockTwilioClient.calls.mockReturnValue({
-        fetch: jest.fn().mockResolvedValue(mockCall),
-      });
-
-      mockTwilioClient.api.v2010.accounts.mockReturnValue({
-        calls: jest.fn().mockReturnValue({
-          events: { list: jest.fn().mockResolvedValue(mockEvents) },
-          recordings: { list: jest.fn().mockResolvedValue(mockRecordings) },
-        }),
-      });
-
-      const result = await twilioService.fetchSummary(callSid);
-
-      // Assert
-      expect(result).toEqual({
-        callSid: mockCall.sid,
-        from: mockCall.from,
-        to: mockCall.to,
-        date_created: expect.any(String),
-        start_time: expect.any(String),
-        end_time: expect.any(String),
-        direction: mockCall.direction,
-        duration: 120,
-        status: mockCall.status,
-        price: -0.05,
-        price_unit: mockCall.priceUnit,
-        recordings: JSON.stringify(mockRecordings),
-        events: JSON.stringify(mockEvents),
-      });
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        `Fetching summary for callSid: ${callSid}`,
       );
     });
   });

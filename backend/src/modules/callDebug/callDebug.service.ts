@@ -88,9 +88,13 @@ export class CallDebugService {
 
   async enqueueCall(callSid: string, userId: string) {
     this.logger.info(`Enqueuing call ${callSid}`);
-    const project = 'call-management-478506';
-    const queue = 'call-logs-queue';
-    const location = 'asia-south1';
+    const project =
+      this.configService.get<string>('GOOGLE_CLOUD_PROJECT_ID') ??
+      'call-management-478506';
+    const queue =
+      this.configService.get<string>('GOOGLE_CLOUD_QUEUE') ?? 'call-logs-queue';
+    const location =
+      this.configService.get<string>('GOOGLE_CLOUD_LOCATION') ?? 'asia-south1';
     const url =
       this.configService.get<string>('PUBLIC_URL') +
       '/call-debug/process-call-logs';
