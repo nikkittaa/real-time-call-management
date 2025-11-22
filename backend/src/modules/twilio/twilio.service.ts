@@ -63,10 +63,7 @@ export class TwilioService {
           .update({ status: 'in-progress' });
         this.logger.info(`Recording started for callSid: ${callSid}`);
       } else {
-        const recording = await this.client.calls(callSid).recordings.create({
-          recordingStatusCallback: `${this.configService.get<string>('PUBLIC_URL')}/twilio/recording-events`,
-          recordingStatusCallbackEvent: ['completed'],
-        });
+        const recording = await this.client.calls(callSid).recordings.create();
         this.logger.info(`Recording started for callSid: ${callSid}`);
         return recording.sid;
       }
@@ -136,7 +133,6 @@ export class TwilioService {
 
   async checkHealth() {
     try {
-      // Lightweight ping to verify Twilio credentials & connectivity
       const account = await this.client.api
         .accounts(this.client.accountSid)
         .fetch();

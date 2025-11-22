@@ -71,8 +71,6 @@ export class ClickhouseService implements OnModuleInit {
       argMax(start_time, created_at) as start_time,
       argMax(end_time, created_at) as end_time ,
       argMax(notes, created_at) as notes,
-      argMax(recording_sid, created_at) as recording_sid,
-      argMax(recording_url, created_at) as recording_url,
       argMax(user_id, created_at) as user_id
     FROM call_logs
     WHERE call_sid = {callSid:String}
@@ -169,8 +167,6 @@ export class ClickhouseService implements OnModuleInit {
         argMax(start_time, created_at) AS start_time,
         argMax(end_time, created_at) AS end_time,
         argMax(notes, created_at) AS notes,
-        argMax(recording_sid, created_at) AS recording_sid,
-        argMax(recording_url, created_at) AS recording_url,
         argMax(direction, created_at) AS direction
       FROM call_logs
       GROUP BY call_sid
@@ -197,27 +193,10 @@ export class ClickhouseService implements OnModuleInit {
     }
   }
 
-  async updateRecordingInfo(
-    callSid: string,
-    recordingSid: string,
-    recordingUrl: string,
-  ) {
-    try {
-      const callData = await this.getCallLog(callSid);
-      callData.recording_sid = recordingSid;
-      callData.recording_url = recordingUrl;
-      await this.insertCallLog(callData);
-      this.logger.info(`Updated recording info for callSid: ${callSid}`);
-    } catch (error) {
-      const err = error as Error;
-      this.logger.error(
-        `Failed to update recording info. Error: ${err.message}`,
-      );
-    }
-  }
-
   async exportCalls(userId: string, exportCallDto: ExportCallDto) {
-    const { from, to, phone, status, direction, notes } = exportCallDto;
+    const { page, limit, from, to, phone, status, direction, notes } =
+      exportCallDto;
+    const offset = (page - 1) * limit;
     const conditions: string[] = [];
     conditions.push(`argMax(user_id, created_at) = '${userId}'`);
 
@@ -260,23 +239,22 @@ export class ClickhouseService implements OnModuleInit {
         argMax(from_number, created_at) AS from_number, 
         argMax(to_number, created_at) AS to_number, 
         argMax(status, created_at) AS status,
-        argMax(direction, created_at) AS direction
+        argMax(direction, created_at) AS direction,
         argMax(duration, created_at) AS duration,
         argMax(start_time, created_at) AS start_time,
         argMax(end_time, created_at) AS end_time,
-        argMax(notes, created_at) AS notes,
-        argMax(recording_sid, created_at) AS recording_sid,
-        argMax(recording_url,created_at) AS recording_url,
-        
+        argMax(notes, created_at) AS notes     
       FROM call_logs
       GROUP BY call_sid
       ${whereClause}
       ORDER BY argMax(start_time, created_at) as start_time DESC
+      LIMIT {limit:UInt64} OFFSET {offset:UInt64}
     `;
 
     try {
       const resultSet = await this.client.query({
         query: query,
+        query_params: { limit, offset },
         format: 'JSONEachRow',
       });
 
@@ -315,6 +293,8 @@ export class ClickhouseService implements OnModuleInit {
               url: event.request.url,
               request: JSON.stringify(event.request.parameters),
               response: JSON.stringify(event.response.response_body),
+              response_code: event.response.response_code,
+              timestamp: event.response.date_created,
             },
           ],
           format: 'JSONEachRow',
@@ -333,15 +313,26 @@ export class ClickhouseService implements OnModuleInit {
 
   async getCallEventLogs(callSid: string) {
     const query = `
-      SELECT url, request, response FROM event_logs WHERE call_sid = {callSid:String} ORDER BY created_at ASC`;
+      SELECT url, request, response, response_code, timestamp FROM event_logs WHERE call_sid = {callSid:String} ORDER BY timestamp ASC`;
     const resultSet = await this.client.query({
       query: query,
       query_params: { callSid },
       format: 'JSONEachRow',
     });
-    const result: { url: string; request: string; response: string }[] =
-      await resultSet.json();
-    return result as { url: string; request: string; response: string }[];
+    const result: {
+      url: string;
+      request: string;
+      response: string;
+      response_code: string;
+      date_created: string;
+    }[] = await resultSet.json();
+    return result as {
+      url: string;
+      request: string;
+      response: string;
+      response_code: string;
+      date_created: string;
+    }[];
   }
 
   async getAnalytics(userId: string, getCallLogsDto: GetCallLogsDto) {
@@ -509,17 +500,6 @@ export class ClickhouseService implements OnModuleInit {
       this.logger.error(`Failed to insert event log. Error: ${err.message}`);
     }
   }
-
-  // async fetchSummary(callSid: string) {
-  //   const query = `
-  //     SELECT * FROM call_debug_info WHERE callSid = '${callSid}'`;
-  //   const resultSet = await this.client.query({
-  //     query: query,
-  //     format: 'JSONEachRow',
-  //   });
-  //   const result: CallDebugInfo[] = await resultSet.json();
-  //   return result[0];
-  // }
 
   async fetchSummary(callSid: string) {
     const events = await this.getCallEventLogs(callSid);

@@ -6,8 +6,6 @@ import { FirebaseService } from '../firebase/firebase.service';
 import { User } from '../users/user.entity';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { CallDebugService } from '../callDebug/callDebug.service';
-import { TwilioRecordingEvent } from 'src/common/interfaces/twilio-recordingevent.interface';
-import { TwilioCallEvent } from 'src/common/interfaces/twilio-callevent.interface';
 import { ConfigService } from '@nestjs/config';
 
 describe('TwilioController', () => {
@@ -35,16 +33,7 @@ describe('TwilioController', () => {
     dateCreated: new Date(),
   };
 
-  const mockFullCall = {
-    sid: 'CA123456789',
-    from: '+1234567890',
-    to: '+0987654321',
-    status: 'completed',
-    duration: '120',
-    startTime: new Date(),
-    endTime: new Date(),
-    dateCreated: new Date(),
-  };
+ 
 
   const mockCallSummary = {
     callSid: 'CA123456789',
@@ -82,7 +71,6 @@ describe('TwilioController', () => {
     const mockClickhouseService = {
       insertCallLog: jest.fn(),
       insertCallDebugInfo: jest.fn(),
-      updateRecordingInfo: jest.fn(),
       fetchSummary: jest.fn(),
       insertEventLog: jest.fn(),
     };
@@ -153,37 +141,19 @@ describe('TwilioController', () => {
       const result = await twilioController.makeCall(to, mockUser);
 
       expect(result).toEqual({
-        message: 'Call initiated successfully',
-        sid: mockCall.sid,
-        status: mockCall.status,
-        to,
-        userId: mockUser.user_id,
+        status: 200,
+        success: true,
+        message: {
+          message: 'Call initiated successfully',
+          sid: mockCall.sid,
+          status: mockCall.status,
+          to,
+          userId: mockUser.user_id,
+        },
       });
       expect(twilioService.makeCall).toHaveBeenCalledWith(to, mockUser.user_id);
       expect(twilioService.makeCall).toHaveBeenCalledTimes(1);
     });
   });
-
-  describe('handleRecordingEvent', () => {
-    const mockRecordingEvent: TwilioRecordingEvent = {
-      CallSid: 'CA123456789',
-      RecordingSid: 'RE123456789',
-      RecordingUrl: 'https://api.twilio.com/recording.wav',
-      RecordingStatus: 'completed',
-    };
-
-    it('should handle recording event successfully', async () => {
-      clickhouseService.updateRecordingInfo.mockResolvedValue(undefined);
-
-      const result =
-        await twilioController.handleRecordingEvent(mockRecordingEvent);
-
-      expect(result).toBe('OK');
-      expect(clickhouseService.updateRecordingInfo).toHaveBeenCalledWith(
-        mockRecordingEvent.CallSid,
-        mockRecordingEvent.RecordingSid,
-        mockRecordingEvent.RecordingUrl,
-      );
-    });
-  });
+  
 });

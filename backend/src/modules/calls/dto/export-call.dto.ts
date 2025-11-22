@@ -5,6 +5,22 @@ import { CallStatus } from 'src/common/enums/call-status.enum';
 
 export class ExportCallDto {
   @ApiProperty({
+    description: 'Limit',
+    example: 100,
+    required: false,
+  })
+  @IsOptional()
+  limit: number = 100;
+
+  @ApiProperty({
+    description: 'Page',
+    example: 1,
+    required: false,
+  })
+  @IsOptional()
+  page: number = 1;
+
+  @ApiProperty({
     description: 'From date',
     example: '2025-01-01',
     required: false,

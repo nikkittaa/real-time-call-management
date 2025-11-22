@@ -49,7 +49,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   exportBtn.addEventListener('click', async () => {
     const params = new URLSearchParams({});
-
+    params.append('limit', limit.value);
+    params.append('page', page.toString());
+    
     if (fromDate.value) {
       params.append('from', new Date(fromDate.value).toISOString());
     }
@@ -153,11 +155,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         prevBtn.disabled = false;
         return;
       }
-
+console.log("data", data);
       data.forEach((log) => {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td><a href="/call_summary.html?callSid=${log.call_sid}" target="_blank">${log.call_sid}</a></td>
+          <td><a href="/callDebug.html?callSid=${log.call_sid}" target="_blank">${log.call_sid}</a></td>
           <td>${log.from_number}</td>
           <td>${log.to_number}</td>
           <td>${log.status}</td>
@@ -165,7 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <td>${new Date(log.start_time).toLocaleString()}</td>
           <td>${new Date(log.end_time).toLocaleString()}</td>
           <td>
-            <span id="note-${log.call_sid}">${log.notes || 'No notes'}</span>
+            <span id="note-${log.call_sid}">${log.notes || ''}</span>
             <div class="note-buttons">
               <button class="view">View</button>
               <button class="edit">Edit</button>

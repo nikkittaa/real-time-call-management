@@ -25,11 +25,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('callSid').innerText = callSid;
   document.getElementById('from').innerText = data.from;
   document.getElementById('to').innerText = data.to;
-  document.getElementById('date').innerText = data.date_created;
-  document.getElementById('startTime').innerText = data.start_time;
-  document.getElementById('endTime').innerText = data.end_time;
+  document.getElementById('date').innerText = data.date_created + " UTC";
+  document.getElementById('startTime').innerText = data.start_time + " UTC";
+  document.getElementById('endTime').innerText = data.end_time + " UTC";
   document.getElementById('direction').innerText = data.direction;
-  document.getElementById('duration').innerText = data.duration;
+  document.getElementById('duration').innerText = data.duration + ' seconds';
   document.getElementById('status').innerText = data.status;
   document.getElementById('price').innerText = data.price;
   document.getElementById('priceUnit').innerText = data.price_unit;
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('child-calls').innerHTML = '<h2>Child Calls</h2>';
     for(const childCall of childCalls) {
       const element = document.createElement('a');
-      element.href = `/call_summary.html?callSid=${childCall.sid}`;
+      element.href = `/callDebug.html?callSid=${childCall.sid}`;
       element.target = '_blank';
       element.innerHTML = `${childCall.sid}`;
       document.getElementById('child-calls').appendChild(element);
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     element.innerHTML = 'View Recording';
     document.getElementById('recordings').innerHTML = element.outerHTML;
   }
-
+  
   if(events.length > 0) {
     for (const event of events) {
         const eventItem = document.createElement("div");
@@ -58,16 +58,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     
         const header = document.createElement("p");
         header.classList.add("event-header");
-        header.innerHTML = `<span>${event.url}</span>`;
+        header.innerHTML = `<span>${event.url} - <span class = "status">${event.response_code} - ${event.timestamp}</span></span>`;
         const details = document.createElement("div");
         details.classList.add("event-details");
         details.innerHTML = `<strong class = "event-subheading">Request</strong><br>`;
               
         for(const [key, value] of Object.entries(JSON.parse(event.request))) {
           details.innerHTML += `<strong>${key}:</strong> ${escapeHtml(JSON.stringify(value))}<br>`;
-          if(key === 'timestamp'){
-            header.innerHTML += `<span class = 'event-timestamp'>${value}</span>`;
-          }
+          // if(key === 'timestamp'){
+          //   header.innerHTML += `<span class = 'event-timestamp'>${value}</span>`;
+          // }
          
           if(data.to === '' && key === 'to'){
             document.getElementById('to').innerText = value;
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             parentElement.setAttribute('id', 'parent-call-sid');
             const element = document.createElement('a');
-            element.href = `/call_summary.html?callSid=${value}`;
+            element.href = `/callDebug.html?callSid=${value}`;
             element.target = '_blank';
             element.innerHTML = `${value}`;
             parentElement.innerHTML = `<p><strong>Parent Call:</strong> ${element.outerHTML}</p>`;

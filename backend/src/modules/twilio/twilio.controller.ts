@@ -30,7 +30,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CallDebugService } from '../callDebug/callDebug.service';
-import type { TwilioRecordingEvent } from 'src/common/interfaces/twilio-recordingevent.interface';
 import type { TwilioCallEvent } from 'src/common/interfaces/twilio-callevent.interface';
 import { ConfigService } from '@nestjs/config';
 import { jwt } from 'twilio';
@@ -69,15 +68,18 @@ export class TwilioController {
     schema: {
       type: 'object',
       properties: {
-        message: { type: 'string', example: 'Call initiated successfully' },
-        sid: { type: 'string', example: 'CA1234567890' },
-        status: {
-          type: 'enum',
-          enum: Object.values(CallStatus),
-          example: CallStatus.COMPLETED,
+        status: { type: 'number', example: 200 },
+        success: { type: 'boolean', example: true },
+        message: {
+          type: 'object',
+          properties: {
+            message: { type: 'string', example: 'Call initiated successfully' },
+            sid: { type: 'string', example: 'CA1234567890' },
+            status: { type: 'string', example: 'completed' },
+            to: { type: 'string', example: '+1234567890' },
+            userId: { type: 'string', example: '1234567890' },
+          },
         },
-        to: { type: 'string', example: '+1234567890' },
-        userId: { type: 'string', example: '1234567890' },
       },
     },
   })
@@ -89,11 +91,15 @@ export class TwilioController {
     try {
       const call = await this.twilioService.makeCall(to, user.user_id);
       return {
-        message: 'Call initiated successfully',
-        sid: call.sid,
-        status: call.status,
-        to,
-        userId: user.user_id,
+        status: 200,
+        success: true,
+        message: {
+          message: 'Call initiated successfully',
+          sid: call.sid,
+          status: call.status,
+          to,
+          userId: user.user_id,
+        },
       };
     } catch (error) {
       const err = error as Error;
@@ -189,28 +195,6 @@ export class TwilioController {
       const err = error as Error;
       throw new BadRequestException(`Failed to stop recording: ${err.message}`);
     }
-  }
-
-  @Post('recording-events')
-  @ApiExcludeEndpoint()
-  async handleRecordingEvent(@Body() body: TwilioRecordingEvent) {
-    const { CallSid, RecordingSid, RecordingUrl } = body;
-    await this.clickhouseService.insertEventLog(
-      body.CallSid,
-      `${this.configService.get<string>('PUBLIC_URL')}/twilio/recording-events`,
-      JSON.stringify(body),
-      'OK',
-    );
-
-    if (body.RecordingStatus === 'completed') {
-      await this.clickhouseService.updateRecordingInfo(
-        CallSid,
-        RecordingSid,
-        RecordingUrl,
-      );
-    }
-
-    return 'OK';
   }
 
   @Get('token')
@@ -323,8 +307,6 @@ export class TwilioController {
       callerId: this.configService.get<string>('TWILIO_PHONE_NUMBER'),
       action: `${this.configService.get<string>('PUBLIC_URL')}/twilio/events-outgoing`,
       record: 'record-from-answer',
-      recordingStatusCallback: `${this.configService.get<string>('PUBLIC_URL')}/twilio/recording-events`,
-      recordingStatusCallbackEvent: ['completed'],
     });
 
     dial.number(
@@ -355,6 +337,7 @@ export class TwilioController {
     twiml
       .dial({
         action: `${this.configService.get<string>('PUBLIC_URL')}/twilio/events-incoming-parent`,
+        record: 'record-from-answer',
       })
       .client(
         {

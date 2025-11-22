@@ -179,3 +179,11 @@ body {
 .xml-bracket {
   color: #56b6c2;
 }
+
+.status{
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #bca102;
+  text-transform: uppercase;
+}

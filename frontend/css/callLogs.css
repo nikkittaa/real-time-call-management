@@ -96,7 +96,7 @@
   /* ========== Pagination ========== */
   .pagination {
     display: flex;
-    justify-content: end;
+    justify-content: space-between;
     align-items: center;
     gap: 12px;
     margin-top: 20px;
@@ -246,6 +246,7 @@
   
   .filters input,
   .filters select,
+  .pagination input,
   .filters button {
     padding: 8px 10px;
     border: 1px solid #ccc;

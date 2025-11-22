@@ -47,15 +47,6 @@ export class CallLogResponse implements CallLog {
   @ApiProperty({ description: 'Created at', example: '2025-01-01T10:00:00Z' })
   created_at?: Date | string | null;
 
-  @ApiProperty({ description: 'Recording SID', example: 'CA1234567890' })
-  recording_sid?: string;
-
-  @ApiProperty({
-    description: 'Recording URL',
-    example: 'https://api.twilio.com/recording.mp3',
-  })
-  recording_url?: string;
-
   @ApiProperty({ description: 'Direction', example: 'outbound-api' })
   direction?: string;
 }

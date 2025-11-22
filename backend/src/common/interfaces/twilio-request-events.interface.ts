@@ -10,6 +10,8 @@ export interface TwilioRequestEvents {
     };
   };
   response: {
+    response_code: string;
+    date_created: string;
     response_body: any;
     [key: string]: any;
   };

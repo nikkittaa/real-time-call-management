@@ -29,10 +29,9 @@ A comprehensive real-time call management application built with modern technolo
 - **🔒 Security** - JWT authentication, request validation, and secure endpoints
 - **📖 API Documentation** - Swagger/OpenAPI integration
 - **🐳 Containerization** - Docker support for easy deployment
-- **🧪 Comprehensive Testing** - Unit tests, integration tests, and E2E testing
+- **🧪 Comprehensive Testing** - Unit tests
 - **⚙️ Background Processing** - Google Cloud Tasks for async call processing
 - **📊 Type Safety** - Full TypeScript implementation with strict typing
-- **🔄 Error Handling** - Graceful error handling with retry mechanisms
 
 ## 🏗️ Technology Stack
 
@@ -41,6 +40,7 @@ A comprehensive real-time call management application built with modern technolo
 - **Database:** ClickHouse (Analytics) + Firebase (Real-time data)
 - **Authentication:** JWT with Passport.js
 - **API Integration:** Twilio (Voice calls and webhooks)
+- **Background Processing:** Google Cloud Tasks
 - **Documentation:** Swagger/OpenAPI
 - **Logging:** Winston with structured logging
 - **Testing:** Jest 
@@ -83,14 +83,18 @@ real-time-call-management/
 │   │   │       ├── call-debug-info.interface.ts
 │   │   │       ├── call-logs.interface.ts
 │   │   │       ├── calldata-firebase.interface.ts
+│   │   │       ├── debug-info.interface.ts
 │   │   │       ├── jwt-payload.interface.ts
 │   │   │       ├── twilio-callevent.interface.ts
-│   │   │       └── twilio-recordingevent.interface.ts
+│   │   │       ├── twilio-request-events.interface.ts
+│   │   │       └── web-call.interface.ts
 │   │   │
 │   │   ├── 📂 modules/                # Feature modules
 │   │   │   ├── 📂 auth/               # Authentication module
 │   │   │   │   ├── auth.controller.ts # Authentication endpoints
+│   │   │   │   ├── auth.controller.spec.ts # Authentication unit tests
 │   │   │   │   ├── auth.service.ts    # Authentication business logic
+│   │   │   │   ├── auth.service.spec.ts # Authentication service tests
 │   │   │   │   ├── auth.module.ts     # Authentication module config
 │   │   │   │   ├── 📂 dto/            # Data Transfer Objects
 │   │   │   │   │   └── sign-in.dto.ts
@@ -99,7 +103,9 @@ real-time-call-management/
 │   │   │   │
 │   │   │   ├── 📂 calls/              # Call management module
 │   │   │   │   ├── call.controller.ts # Call endpoints
+│   │   │   │   ├── call.controller.spec.ts # Call controller tests
 │   │   │   │   ├── calls.service.ts   # Call business logic
+│   │   │   │   ├── calls.service.spec.ts # Call service tests
 │   │   │   │   ├── calls.module.ts    # Call module config
 │   │   │   │   └── 📂 dto/            # Call-related DTOs
 │   │   │   │       ├── analytic.dto.ts
@@ -111,6 +117,7 @@ real-time-call-management/
 │   │   │   │
 │   │   │   ├── 📂 clickhouse/         # ClickHouse database module
 │   │   │   │   ├── clickhouse.service.ts # Database operations
+│   │   │   │   ├── clickhouse.service.spec.ts # ClickHouse service tests
 │   │   │   │   └── clickhouse.module.ts
 │   │   │   │
 │   │   │   ├── 📂 firebase/           # Firebase integration
@@ -119,12 +126,16 @@ real-time-call-management/
 │   │   │   │
 │   │   │   ├── 📂 twilio/             # Twilio integration module
 │   │   │   │   ├── twilio.controller.ts # Twilio webhooks & calls
+│   │   │   │   ├── twilio.controller.spec.ts # Twilio controller tests
 │   │   │   │   ├── twilio.service.ts  # Twilio API operations
+│   │   │   │   ├── twilio.service.spec.ts # Twilio service tests
 │   │   │   │   └── twilio.module.ts
 │   │   │   │
 │   │   │   ├── 📂 users/              # User management module
 │   │   │   │   ├── users.controller.ts # User endpoints
+│   │   │   │   ├── users.controller.spec.ts # User controller tests
 │   │   │   │   ├── users.service.ts   # User business logic
+│   │   │   │   ├── users.service.spec.ts # User service tests
 │   │   │   │   ├── users.module.ts    # User module config
 │   │   │   │   ├── user.entity.ts     # User entity definition
 │   │   │   │   └── 📂 dto/
@@ -132,7 +143,9 @@ real-time-call-management/
 │   │   │   │
 │   │   │   ├── 📂 callDebug/          # Call debugging module
 │   │   │   │   ├── callDebug.controller.ts # Cloud tasks webhook endpoints
+│   │   │   │   ├── callDebug.controller.spec.ts # CallDebug controller tests
 │   │   │   │   ├── callDebug.service.ts    # Background call processing
+│   │   │   │   ├── callDebug.service.spec.ts # CallDebug service tests
 │   │   │   │   ├── callDebug.module.ts     # Call debug module config
 │   │   │   │   └── 📂 dto/                 # Data Transfer Objects
 │   │   │   │       └── call-enque.dto.ts
@@ -148,8 +161,7 @@ real-time-call-management/
 │   │
 │   ├── 📂 test/                       # Test files
 │   │   ├── app.e2e-spec.ts            # Application E2E tests
-│   │   ├── call-management.e2e-spec.ts # Call management E2E tests      
-│   │   ├── jest-e2e.json              # E2E test configuration
+│   │   └── jest-e2e.json              # E2E test configuration
 │   │
 │   ├── 📄 package.json                # NPM dependencies and scripts
 │   ├── 📄 package-lock.json          # Dependency lock file
@@ -165,8 +177,9 @@ real-time-call-management/
     ├── 📄 index.html                  # Login/Home page
     ├── 📄 signup.html                 # User registration page
     ├── 📄 dashboard.html              # Main dashboard
+    ├── 📄 webCall.html                # Web call interface
     ├── 📄 call_logs.html              # Call history view
-    ├── 📄 call_summary.html           # Individual call details
+    ├── 📄 callDebug.html              # Call debugging interface
     ├── 📄 analytics.html              # Analytics dashboard
     ├── 📄 nginx.conf                  # Nginx configuration
     ├── 📄 Dockerfile.dev              # Frontend Docker image
@@ -174,17 +187,20 @@ real-time-call-management/
     ├── 📂 css/                        # Stylesheets
     │   ├── style.css                  # Main application styles
     │   ├── dashboard.css              # Dashboard-specific styles
+    │   ├── webCalls.css               # Web calls page styles
     │   ├── callLogs.css               # Call logs page styles
-    │   ├── analytics.css              # Analytics page styles
-    │   └── debug.css                  # Debug page styles
+    │   ├── callDebug.css              # Call debug page styles
+    │   └── analytics.css              # Analytics page styles
     │
     └── 📂 js/                         # JavaScript modules
         ├── 📄 auth.js                 # Authentication logic
+        ├── 📄 twilio.js               # Twilio integration
         │
         ├── 📂 dashboard/              # Dashboard functionality
         │   ├── dashboard.js           # Main dashboard logic
         │   ├── callActions.js         # Call action handlers
         │   ├── callStream.js          # Real-time call streaming
+        │   ├── webCalls.js            # Web calls functionality
         │   └── utils.js               # Dashboard utilities
         │
         ├── 📂 call_logs/              # Call logs functionality
@@ -192,11 +208,11 @@ real-time-call-management/
         │   ├── notes.js               # Notes management
         │   └── utils.js               # Call logs utilities
         │
-        ├── 📂 analytics/              # Analytics functionality
-        │   └── analytics.js           # Analytics dashboard logic
+        ├── 📂 callDebug/              # Call debug functionality
+        │   └── callDebug.js           # Call debugging interface
         │
-        └── 📂 debug/                  # Debug functionality
-            └── debug.js               # Call debugging interface
+        └── 📂 analytics/              # Analytics functionality
+            └── analytics.js           # Analytics dashboard logic
 ```
 
 ### Key Directories Explained:
@@ -362,7 +378,6 @@ GET    /calls/stream       # Real-time call updates (SSE)
 POST   /twilio/make        # Initiate outbound call
 POST   /twilio/voice       # TwiML response endpoint
 POST   /twilio/events      # Twilio webhook for call events
-POST   /twilio/recording-events  # Recording status updates
 ```
 
 #### Call Debug Processing
@@ -388,30 +403,13 @@ This project includes comprehensive testing with Jest and NestJS testing utiliti
 # Run unit tests
 npm run test
 
-# Run E2E tests
-npm run test:e2e
 
 ```
 
 ### Test Categories
 
 - **Unit Tests:** Individual component and service testing 
-- **E2E Tests:** Full application flow testing including:
-  - Authentication flows
-  - Call management operations
-  - Security validation
-  - API endpoint testing
 
-### Test Coverage
-
-Our test suite covers:
-- **Controllers:** API endpoint behavior and error handling
-- **Services:** Business logic and data processing
-- **Authentication:** JWT validation and security
-- **Database Operations:** ClickHouse queries and Firebase operations
-- **External API Integration:** Twilio service mocking
-- **Background Processing:** Cloud Tasks queue operations
- 
 
 ## 📚 API Documentation
 
@@ -461,59 +459,8 @@ const analytics = await fetch('/calls/analytics', {
 
 ### Data Protection
 - **Input Validation:** Request validation using class-validator decorators
-- **SQL Injection Prevention:** Parameterized queries in ClickHouse operations
-- **CORS Configuration:** Proper cross-origin resource sharing setup
 - **Environment Variables:** Sensitive data stored securely in .env files
 
-### API Security
-- **Error Handling:** Structured error responses without sensitive data exposure
-- **Request Logging:** Comprehensive logging for security monitoring
-- **Rate Limiting:** Configurable through reverse proxy or application level
-- **HTTPS Enforcement:** SSL/TLS encryption for production deployments
-
-### Infrastructure Security
-- **Service Account Keys:** Firebase and Google Cloud credentials properly managed
-- **Database Access:** Restricted database connections and credentials
-- **Container Security:** Docker images with minimal attack surface
-
-## 📊 Monitoring & Logging
-
-### Logging Features
-- **Structured Logging:** Comprehensive logs with Winston logger
-- **Log Levels:** Debug, info, warn, error classification with appropriate routing
-- **Context Logging:** Request correlation and tracing with module-specific contexts
-- **Error Tracking:** Detailed error logging with stack traces and context
-
-### Performance Monitoring
-- **Database Query Performance:** ClickHouse query execution monitoring
-- **API Response Times:** Request/response duration tracking
-- **Memory Usage:** Application memory footprint monitoring
-- **Background Job Status:** Cloud Tasks queue processing monitoring
-
-### Health Checks
-- **Application Health:** `/health` endpoint for service status
-- **Database Connectivity:** ClickHouse and Firebase connection verification
-- **External Service Health:** Twilio API connectivity checks
-
-
-### Development Setup
-
-```bash
-# Install dependencies
-npm install
-
-# Set up git hooks
-npm run prepare
-
-# Start development
-npm run start:dev
-
-# Run linting
-npm run lint
-
-# Format code
-npm run format
-```
 
 
 
