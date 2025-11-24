@@ -14,7 +14,7 @@ import { TwilioRequestEvents } from 'src/common/interfaces/twilio-request-events
 export class CallDebugService {
   private readonly logger: Logger;
   private client = new CloudTasksClient({
-    keyFilename: 'call-management-478506-caef08d2ae2e.json',
+    keyFilename: 'call-management.json',
   });
 
   constructor(

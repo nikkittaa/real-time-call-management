@@ -62,6 +62,9 @@ A comprehensive real-time call management application built with modern technolo
 real-time-call-management/
 ├── 📄 docker-compose.yml              # Docker orchestration configuration
 ├── 📄 README.md                       # Project documentation
+|___ clickhouse
+|   |__ init
+|      |__init.sql                     # initial script for clickhouse tables
 │
 ├── 📂 backend/                        # Node.js/NestJS Backend
 │   ├── 📂 dist/                       # Compiled JavaScript files
@@ -256,36 +259,36 @@ cd real-time-call-management
 Create a `.env` file in the `backend` directory:
 
 ```env
-# Database Configuration
-CLICKHOUSE_HOST=clickhouse
-CLICKHOUSE_PORT=8123
-CLICKHOUSE_DATABASE=call_management
-CLICKHOUSE_USERNAME=default
-CLICKHOUSE_PASSWORD=
+JWT_SECRET=your-jwt-secret
 
-# JWT Configuration
-JWT_SECRET=your-super-secure-jwt-secret-key-here
-JWT_EXPIRES_IN=24h
-
-# Twilio Configuration  
 TWILIO_ACCOUNT_SID=your-twilio-account-sid
 TWILIO_AUTH_TOKEN=your-twilio-auth-token
 TWILIO_PHONE_NUMBER=your-twilio-phone-number
+TWIML_APP_SID=your-twilio-app-sid
+TWIML_APP_SID_OUTGOING=app_sid_for_outgoing_calls
+TWILIO_API_KEY=api_key
+TWILIO_API_SECRET=twilio_api_secret
+TEST_USER=54228d9e-7d71-4942-bbaa-6461d1a9fd29
 
-# Firebase Configuration
-FIREBASE_PROJECT_ID=your-firebase-project-id
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-FIREBASE_CLIENT_EMAIL=your-service-account@project.iam.gserviceaccount.com
+FIREBASE_PROJECT_ID=real-time-call-management
+FIREBASE_DB_URL=your-firebase-db-url
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----private_key-----END PRIVATE KEY-----\n"
+FIREBASE_CLIENT_EMAIL="firebase-adminsdk-fbsvc@real-time-call-management.iam.gserviceaccount.com"
 
-# Application Configuration
+CLICKHOUSE_URL=http://clickhouse:8123
+CLICKHOUSE_USERNAME=default
+CLICKHOUSE_PASSWORD=default_user_password
+CLICKHOUSE_DATABASE=call_management
+PUBLIC_URL=your_ngrok_public_url_for_backend 
+
 NODE_ENV=development
 PORT=3002
 
-#GOOGLE CLOUD TASKS CONFIGURATION
-GOOGLE_CLOUD_KEY_FILE=file_name
-GOOGLE_CLOUD_PROJECT_ID=name_of_project_id
-GOOGLE_CLOUD_QUEUE=queue_name
-GOOGLE_CLOUD_LOCATION=region
+
+GOOGLE_CLOUD_KEY_FILE=key_filename_for_google_cloud_tasks
+GOOGLE_CLOUD_PROJECT_ID=your_project_id
+GOOGLE_CLOUD_QUEUE=call-logs-queue
+GOOGLE_CLOUD_LOCATION=asia-south1
 ```
 
 ### 3. Firebase Setup
@@ -294,17 +297,26 @@ GOOGLE_CLOUD_LOCATION=region
 2. Generate a service account key
 3. Add the credentials to your `.env` file
 4. Set up Firebase Realtime Database
+5. Add the key file real-time-firebase.json to the project (backend folder)
 
 ### 4. Twilio Setup
 
 1. Sign up at [Twilio Console](https://console.twilio.com/)
 2. Get your Account SID, Auth Token, and phone number
-3. Configure webhooks for call events:
-   - Voice URL: `http://your-domain.com/twilio/voice`
-   - Status Callback URL: `http://your-domain.com/twilio/events`
-   - Recording Status Callback: `http://your-domain.com/twilio/recording-events`
+3. Create a twiMl app (application sid  in env)
+    -request url: https://ngrok_public_url/twilio/voice
+    - statuscallback url: https://ngrok_public_url/twilio/events
+4. Create another twiMl for outgoing call 
+    - request url: https://ngrok_public_url/twilio/voice-outgoing
 
-### 5. Run with Docker (Recommended)
+5. Twilio number configurations:
+    - a call comes in: https://ngrok_public_url/twilio/incoming
+    - call status changes: https://ngrok_public_url/twilio/events-incoming-parent-end
+
+### 5. Google cloud tasks
+   - enable a  google project with cloud tasks and add the key file in backend folder with name call-management.json
+
+### 6. Run with Docker (Recommended)
 
 ```bash
 # Start all services
@@ -316,6 +328,8 @@ docker-compose logs -f
 # Stop services
 docker-compose down
 ```
+
+Also start an ngrok server to get a public url for backend and use it for twilio configurations
 
 ### 6. Manual Installation (Alternative)
 
@@ -346,6 +360,9 @@ python -m http.server 8080  # or use nginx
 - **Backend API:** http://localhost:3002  
 - **API Documentation:** http://localhost:3002/api
 - **ClickHouse UI:** http://localhost:8123
+
+Test user - Jane
+Password  - 123456
 
 ### Basic Workflow
 
