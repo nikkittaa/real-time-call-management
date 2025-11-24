@@ -65,9 +65,6 @@ document.addEventListener('DOMContentLoaded', async () => {
               
         for(const [key, value] of Object.entries(JSON.parse(event.request))) {
           details.innerHTML += `<strong>${key}:</strong> ${escapeHtml(JSON.stringify(value))}<br>`;
-          // if(key === 'timestamp'){
-          //   header.innerHTML += `<span class = 'event-timestamp'>${value}</span>`;
-          // }
          
           if(data.to === '' && key === 'to'){
             document.getElementById('to').innerText = value;
@@ -91,7 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       
        if (event.response) {
         details.innerHTML += `<strong class = "event-subheading">Response</strong>
-            <pre class="response-body">${(formatAndColorXml(event.response))}</pre>
+            <pre class="response-body">"${(formatAndColorXml(event.response))}"</pre>
         `;
 
       }

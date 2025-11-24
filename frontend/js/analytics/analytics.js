@@ -18,14 +18,14 @@ export async function loadAnalytics() {
     
 
     const params = new URLSearchParams({});
-
+   
     if (fromDate.value) {
       params.append('from', new Date(fromDate.value).toISOString());
     }
   
     if (toDate.value) {
+      const d = new Date(toDate.value);
       d.setDate(d.getDate() + 1); 
-      console.log(d.toISOString());
       params.append('to', d.toISOString());
     }
 

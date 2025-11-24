@@ -155,7 +155,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         prevBtn.disabled = false;
         return;
       }
-console.log("data", data);
       data.forEach((log) => {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -174,7 +173,6 @@ console.log("data", data);
             </div>
           </td>
         `;
-
         row.querySelector('.view').onclick = () => viewNote(log.call_sid);
         row.querySelector('.edit').onclick = () => editNote(log.call_sid);
         tableBody.appendChild(row);

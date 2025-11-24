@@ -276,4 +276,52 @@
     color: blue;
   }
   
-  
+  /* Make table respect fixed widths */
+table {
+  table-layout: fixed; /* forces fixed width */
+  width: 100%; /* optional, full width table */
+  border-collapse: collapse; /* optional, cleaner borders */
+}
+
+/* Fix column widths */
+table td, table th {
+  overflow: hidden;  /* hide overflow text */
+}
+
+
+table td:nth-child(1),
+table th:nth-child(1) {
+  width: 300px; /* call_sid column */
+}
+
+table td:nth-child(2),
+table th:nth-child(2) {
+  width: 120px; /* from_number */
+}
+
+table td:nth-child(3),
+table th:nth-child(3) {
+  width: 120px; /* to_number */
+}
+
+table td:nth-child(4),
+table th:nth-child(4) {
+  width: 100px; /* status */
+}
+
+table td:nth-child(5),
+table th:nth-child(5) {
+  width: 100px; /* direction */
+}
+
+table td:nth-child(6),
+table th:nth-child(6),
+table td:nth-child(7),
+table th:nth-child(7) {
+  width: 150px; /* start_time & end_time */
+}
+
+table td:nth-child(8),
+table th:nth-child(8) {
+  width: 100px; /* notes column */
+}
