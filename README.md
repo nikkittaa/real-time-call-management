@@ -2,6 +2,7 @@
 
 A comprehensive real-time call management application built with modern technologies, enabling users to make calls, track analytics, and manage call data in real-time.
 
+Detailed documentation with screenshots: https://docs.google.com/document/d/1wI2O0TemCz8SswSrisA5bTWkg9a5XGR52Tp6IOdbhJE/edit?usp=sharing
 
 ## 🚀 Features
 
@@ -297,7 +298,6 @@ GOOGLE_CLOUD_LOCATION=asia-south1
 2. Generate a service account key
 3. Add the credentials to your `.env` file
 4. Set up Firebase Realtime Database
-5. Add the key file real-time-firebase.json to the project (backend folder)
 
 ### 4. Twilio Setup
 

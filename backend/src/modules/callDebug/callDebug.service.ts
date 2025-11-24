@@ -9,13 +9,12 @@ import { formatDateForClickHouse } from 'src/utils/formatDatefoClickhouse';
 import { CallStatus } from 'src/common/enums/call-status.enum';
 import { CallEnqueDto } from './dto/call-enque.dto';
 import { TwilioRequestEvents } from 'src/common/interfaces/twilio-request-events.interface';
+import * as fs from 'fs';
 
 @Injectable()
 export class CallDebugService {
   private readonly logger: Logger;
-  private client = new CloudTasksClient({
-    keyFilename: 'call-management.json',
-  });
+  private client: CloudTasksClient;
 
   constructor(
     private readonly twilioService: TwilioService,
@@ -24,6 +23,24 @@ export class CallDebugService {
     @Inject(WINSTON_MODULE_PROVIDER) private readonly parentLogger: Logger,
   ) {
     this.logger = this.parentLogger.child({ context: 'CallDebugService' });
+
+    const googleCloudKeyFile =
+      this.configService.get<string>('GOOGLE_CLOUD_KEY_FILE') ||
+      'call-management.json';
+
+    if (fs.existsSync(googleCloudKeyFile)) {
+      this.client = new CloudTasksClient({
+        keyFilename: googleCloudKeyFile,
+      });
+      this.logger.info(
+        `Google Cloud Tasks client initialized with key file: ${googleCloudKeyFile}`,
+      );
+    } else {
+      this.client = new CloudTasksClient();
+      this.logger.warn(
+        `Google Cloud key file not found at ${googleCloudKeyFile}. Using Application Default Credentials.`,
+      );
+    }
   }
 
   async insertCallDebugInfoWithDelay(callEnqueDto: CallEnqueDto) {

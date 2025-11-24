@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import { ConfigService } from '@nestjs/config';
-import * as serviceAccount from '../../../real-time-firebase.json';
 import { cert, getApp, getApps } from 'firebase-admin/app';
 import { getDatabase } from 'firebase-admin/database';
 
@@ -12,14 +11,29 @@ export class FirebaseService {
   constructor(private configService: ConfigService) {
     const databaseURL = this.configService.get<string>('FIREBASE_DB_URL');
 
-    const serviceAccountClone: admin.ServiceAccount = JSON.parse(
-      JSON.stringify(serviceAccount),
-    ) as admin.ServiceAccount;
+    let serviceAccount: admin.ServiceAccount;
+
+    const firebasePrivateKey = this.configService.get<string>(
+      'FIREBASE_PRIVATE_KEY',
+    ) || '';
+    const firebaseClientEmail = this.configService.get<string>(
+      'FIREBASE_CLIENT_EMAIL',
+    );
+    const firebaseProjectId = this.configService.get<string>(
+      'FIREBASE_PROJECT_ID',
+    );
+
+      serviceAccount = {
+        projectId: firebaseProjectId,
+        clientEmail: firebaseClientEmail,
+        privateKey: firebasePrivateKey.replace(/\\n/g, '\n'),
+      };
+   
 
     let app;
     if (getApps().length === 0) {
       app = admin.initializeApp({
-        credential: cert(serviceAccountClone),
+        credential: cert(serviceAccount),
         databaseURL,
       });
       this.db = getDatabase(app);
