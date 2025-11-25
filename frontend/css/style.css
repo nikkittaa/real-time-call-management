@@ -1,0 +1,91 @@
+.page {
+    font-family: Arial, sans-serif;
+    background-color: #f0f4f8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+  
+  /* Form container */
+  .form-container {
+    background-color: #fff;
+    padding: 30px 40px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    width: 300px;
+  }
+  
+  /* Form inputs */
+  .input-field {
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccd0d5;
+    border-radius: 5px;
+    font-size: 16px;
+    outline: none;
+    transition: 0.2s;
+  }
+  
+  .input-field:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+  }
+  
+  /* Buttons */
+  .btn {
+    padding: 10px;
+    background-color: #3b82f6;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: 0.2s;
+  }
+  
+  .btn:hover {
+    background-color: #2563eb;
+  }
+  
+  /* Heading */
+  .form-heading {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #1f2937;
+  }
+  
+  /* Message */
+  .message {
+    text-align: center;
+    margin-top: 10px;
+    font-weight: bold;
+    min-height: 20px;
+  }
+  
+  /* Link to switch pages */
+  .switch-link {
+    text-align: center;
+    margin-top: 15px;
+  }
+  
+  .switch-link a {
+    text-decoration: none;
+    color: #3b82f6;
+    font-weight: bold;
+  }
+  
+  .switch-link a:hover {
+    color: #2563eb;
+  }
+  
+  /* Responsive */
+  @media (max-width: 400px) {
+    .form-container {
+      width: 90%;
+      padding: 20px;
+    }
+  }

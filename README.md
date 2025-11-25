@@ -1,0 +1,485 @@
+# 📞 Real-Time Call Management System
+
+A comprehensive real-time call management application built with modern technologies, enabling users to make calls, track analytics, and manage call data in real-time.
+
+Detailed documentation with screenshots: https://docs.google.com/document/d/1wI2O0TemCz8SswSrisA5bTWkg9a5XGR52Tp6IOdbhJE/edit?usp=sharing
+
+## 🚀 Features
+
+### Core Functionality
+- **🔐 User Authentication** - Secure JWT-based authentication system
+- **📞 Call Management** - Make outbound calls via Twilio integration  
+- **📊 Real-time Analytics** - Live call statistics and performance metrics
+- **📋 Call Logging** - Comprehensive call history with detailed information
+- **📝 Call Notes** - Add, edit, and manage notes for individual calls
+- **🎵 Call Recording** - Automatic call recording with playback functionality
+- **📱 Real-time Updates** - Live call status updates using Server-Sent Events (SSE)
+
+### Analytics & Reporting  
+- **📈 Dashboard** - Interactive dashboard with call metrics and pie charts
+- **📊 Advanced Analytics** - Call duration, success rates, and trend analysis
+- **📤 Data Export** - Export call logs to CSV format
+- **🔍 Advanced Filtering** - Filter calls by date range, status, and phone numbers  
+- **📋 Call Summary** - Detailed call debug information and summaries
+- **🎯 Visual Analytics** - Interactive pie charts for call status and direction distribution
+- **📅 Date Range Analytics** - Configurable date filtering with validation
+
+### Technical Features
+- **⚡ Real-time Data** - Firebase integration for live data synchronization
+- **🗄️ High-Performance Database** - ClickHouse for fast analytics queries  
+- **🔒 Security** - JWT authentication, request validation, and secure endpoints
+- **📖 API Documentation** - Swagger/OpenAPI integration
+- **🐳 Containerization** - Docker support for easy deployment
+- **🧪 Comprehensive Testing** - Unit tests
+- **⚙️ Background Processing** - Google Cloud Tasks for async call processing
+- **📊 Type Safety** - Full TypeScript implementation with strict typing
+
+## 🏗️ Technology Stack
+
+### Backend
+- **Framework:** NestJS 11+ (Node.js/TypeScript)
+- **Database:** ClickHouse (Analytics) + Firebase (Real-time data)
+- **Authentication:** JWT with Passport.js
+- **API Integration:** Twilio (Voice calls and webhooks)
+- **Background Processing:** Google Cloud Tasks
+- **Documentation:** Swagger/OpenAPI
+- **Logging:** Winston with structured logging
+- **Testing:** Jest 
+
+### Frontend  
+- **Technology:** Vanilla HTML5, CSS3, JavaScript (ES6+)
+- **Styling:** Custom CSS with modern design principles
+- **Real-time:** Server-Sent Events (SSE) for live updates
+- **Charts:** Interactive analytics dashboards
+
+### Infrastructure
+- **Containerization:** Docker + Docker Compose  
+- **Web Server:** Nginx (Frontend proxy)
+- **Development:** Hot reload, linting, code formatting
+
+## 📁 Project Structure
+
+```
+real-time-call-management/
+├── 📄 docker-compose.yml              # Docker orchestration configuration
+├── 📄 README.md                       # Project documentation
+|___ clickhouse
+|   |__ init
+|      |__init.sql                     # initial script for clickhouse tables
+│
+├── 📂 backend/                        # Node.js/NestJS Backend
+│   ├── 📂 dist/                       # Compiled JavaScript files
+│   │
+│   ├── 📂 src/                        # Source code
+│   │   ├── 📄 main.ts                 # Application entry point
+│   │   ├── 📄 app.module.ts           # Root application module
+│   │   ├── 📄 app.controller.ts       # Root controller
+│   │   ├── 📄 app.service.ts          # Root service
+│   │   │
+│   │   ├── 📂 common/                 # Shared utilities and interfaces
+│   │   │   ├── 📂 decorators/         # Custom decorators
+│   │   │   │   └── get-jwt-payload.decorator.ts
+│   │   │   ├── 📂 enums/              # Application enums
+│   │   │   │   └── call-status.enum.ts
+│   │   │   ├── 📂 filters/            # Exception filters
+│   │   │   │   └── http-exception.filter.ts
+│   │   │   └── 📂 interfaces/         # TypeScript interfaces
+│   │   │       ├── call-debug-info.interface.ts
+│   │   │       ├── call-logs.interface.ts
+│   │   │       ├── calldata-firebase.interface.ts
+│   │   │       ├── debug-info.interface.ts
+│   │   │       ├── jwt-payload.interface.ts
+│   │   │       ├── twilio-callevent.interface.ts
+│   │   │       ├── twilio-request-events.interface.ts
+│   │   │       └── web-call.interface.ts
+│   │   │
+│   │   ├── 📂 modules/                # Feature modules
+│   │   │   ├── 📂 auth/               # Authentication module
+│   │   │   │   ├── auth.controller.ts # Authentication endpoints
+│   │   │   │   ├── auth.controller.spec.ts # Authentication unit tests
+│   │   │   │   ├── auth.service.ts    # Authentication business logic
+│   │   │   │   ├── auth.service.spec.ts # Authentication service tests
+│   │   │   │   ├── auth.module.ts     # Authentication module config
+│   │   │   │   ├── 📂 dto/            # Data Transfer Objects
+│   │   │   │   │   └── sign-in.dto.ts
+│   │   │   │   └── 📂 strategies/     # Passport strategies
+│   │   │   │       └── jwt.strategy.ts
+│   │   │   │
+│   │   │   ├── 📂 calls/              # Call management module
+│   │   │   │   ├── call.controller.ts # Call endpoints
+│   │   │   │   ├── call.controller.spec.ts # Call controller tests
+│   │   │   │   ├── calls.service.ts   # Call business logic
+│   │   │   │   ├── calls.service.spec.ts # Call service tests
+│   │   │   │   ├── calls.module.ts    # Call module config
+│   │   │   │   └── 📂 dto/            # Call-related DTOs
+│   │   │   │       ├── analytic.dto.ts
+│   │   │   │       ├── callEvent.dto.ts
+│   │   │   │       ├── create-notes.dto.ts
+│   │   │   │       ├── debugInfo.dto.ts
+│   │   │   │       ├── export-call.dto.ts
+│   │   │   │       └── get-call-logs.dto.ts
+│   │   │   │
+│   │   │   ├── 📂 clickhouse/         # ClickHouse database module
+│   │   │   │   ├── clickhouse.service.ts # Database operations
+│   │   │   │   ├── clickhouse.service.spec.ts # ClickHouse service tests
+│   │   │   │   └── clickhouse.module.ts
+│   │   │   │
+│   │   │   ├── 📂 firebase/           # Firebase integration
+│   │   │   │   ├── firebase.service.ts # Real-time database ops
+│   │   │   │   └── firebase.module.ts
+│   │   │   │
+│   │   │   ├── 📂 twilio/             # Twilio integration module
+│   │   │   │   ├── twilio.controller.ts # Twilio webhooks & calls
+│   │   │   │   ├── twilio.controller.spec.ts # Twilio controller tests
+│   │   │   │   ├── twilio.service.ts  # Twilio API operations
+│   │   │   │   ├── twilio.service.spec.ts # Twilio service tests
+│   │   │   │   └── twilio.module.ts
+│   │   │   │
+│   │   │   ├── 📂 users/              # User management module
+│   │   │   │   ├── users.controller.ts # User endpoints
+│   │   │   │   ├── users.controller.spec.ts # User controller tests
+│   │   │   │   ├── users.service.ts   # User business logic
+│   │   │   │   ├── users.service.spec.ts # User service tests
+│   │   │   │   ├── users.module.ts    # User module config
+│   │   │   │   ├── user.entity.ts     # User entity definition
+│   │   │   │   └── 📂 dto/
+│   │   │   │       └── create-user.dto.ts
+│   │   │   │
+│   │   │   ├── 📂 callDebug/          # Call debugging module
+│   │   │   │   ├── callDebug.controller.ts # Cloud tasks webhook endpoints
+│   │   │   │   ├── callDebug.controller.spec.ts # CallDebug controller tests
+│   │   │   │   ├── callDebug.service.ts    # Background call processing
+│   │   │   │   ├── callDebug.service.spec.ts # CallDebug service tests
+│   │   │   │   ├── callDebug.module.ts     # Call debug module config
+│   │   │   │   └── 📂 dto/                 # Data Transfer Objects
+│   │   │   │       └── call-enque.dto.ts
+│   │   │   │
+│   │   │   └── 📂 logger/             # Logging module
+│   │   │       └── logger.module.ts
+│   │   │
+│   │   ├── 📂 health/                 # Health check endpoints
+│   │   │   └── health.controller.ts
+│   │   │
+│   │   └── 📂 utils/                  # Utility functions
+│   │       └── formatDatefoClickhouse.ts
+│   │
+│   ├── 📂 test/                       # Test files
+│   │   ├── app.e2e-spec.ts            # Application E2E tests
+│   │   └── jest-e2e.json              # E2E test configuration
+│   │
+│   ├── 📄 package.json                # NPM dependencies and scripts
+│   ├── 📄 package-lock.json          # Dependency lock file
+│   ├── 📄 tsconfig.json              # TypeScript configuration
+│   ├── 📄 tsconfig.build.json        # Build TypeScript config
+│   ├── 📄 nest-cli.json              # NestJS CLI configuration
+│   ├── 📄 jest.config.js             # Jest test configuration
+│   ├── 📄 eslint.config.mjs          # ESLint configuration
+│   ├── 📄 Dockerfile.dev             # Development Docker image
+│   └── 📄 real-time-firebase.json    # Firebase service account key
+│
+└── 📂 frontend/                       # Frontend Application
+    ├── 📄 index.html                  # Login/Home page
+    ├── 📄 signup.html                 # User registration page
+    ├── 📄 dashboard.html              # Main dashboard
+    ├── 📄 webCall.html                # Web call interface
+    ├── 📄 call_logs.html              # Call history view
+    ├── 📄 callDebug.html              # Call debugging interface
+    ├── 📄 analytics.html              # Analytics dashboard
+    ├── 📄 nginx.conf                  # Nginx configuration
+    ├── 📄 Dockerfile.dev              # Frontend Docker image
+    │
+    ├── 📂 css/                        # Stylesheets
+    │   ├── style.css                  # Main application styles
+    │   ├── dashboard.css              # Dashboard-specific styles
+    │   ├── webCalls.css               # Web calls page styles
+    │   ├── callLogs.css               # Call logs page styles
+    │   ├── callDebug.css              # Call debug page styles
+    │   └── analytics.css              # Analytics page styles
+    │
+    └── 📂 js/                         # JavaScript modules
+        ├── 📄 auth.js                 # Authentication logic
+        ├── 📄 twilio.js               # Twilio integration
+        │
+        ├── 📂 dashboard/              # Dashboard functionality
+        │   ├── dashboard.js           # Main dashboard logic
+        │   ├── callActions.js         # Call action handlers
+        │   ├── callStream.js          # Real-time call streaming
+        │   ├── webCalls.js            # Web calls functionality
+        │   └── utils.js               # Dashboard utilities
+        │
+        ├── 📂 call_logs/              # Call logs functionality
+        │   ├── callLogs.js            # Call logs display logic
+        │   ├── notes.js               # Notes management
+        │   └── utils.js               # Call logs utilities
+        │
+        ├── 📂 callDebug/              # Call debug functionality
+        │   └── callDebug.js           # Call debugging interface
+        │
+        └── 📂 analytics/              # Analytics functionality
+            └── analytics.js           # Analytics dashboard logic
+```
+
+### Key Directories Explained:
+
+#### Backend Structure:
+- **`src/modules/`** - Feature-based modules following NestJS architecture
+- **`src/common/`** - Shared utilities, interfaces, and decorators used across modules
+- **`src/health/`** - Application health monitoring endpoints
+- **`test/`** - Comprehensive test suites for API endpoints
+
+#### Frontend Structure:
+- **Root HTML files** - Individual pages for different application views
+- **`css/`** - Modular stylesheets for each page/component
+- **`js/`** - Organized JavaScript modules by feature area
+
+#### Configuration Files:
+- **`docker-compose.yml`** - Multi-service container orchestration
+- **`package.json`** - Dependencies, scripts, and project metadata
+- **TypeScript configs** - Compilation and build settings
+- **Test configs** - Jest and E2E testing configurations
+
+## 📋 Prerequisites
+
+Before running this application, ensure you have:
+
+- **Node.js** 18+ and **npm** 
+- **Docker** and **Docker Compose**
+- **Twilio Account** (for call functionality)
+- **Firebase Project** (for real-time features)
+
+## ⚙️ Installation & Setup
+
+### 1. Clone the Repository
+```bash
+git clone <repository-url>
+cd real-time-call-management
+```
+
+### 2. Environment Configuration
+
+Create a `.env` file in the `backend` directory:
+
+```env
+JWT_SECRET=your-jwt-secret
+
+TWILIO_ACCOUNT_SID=your-twilio-account-sid
+TWILIO_AUTH_TOKEN=your-twilio-auth-token
+TWILIO_PHONE_NUMBER=your-twilio-phone-number
+TWIML_APP_SID=your-twilio-app-sid
+TWIML_APP_SID_OUTGOING=app_sid_for_outgoing_calls
+TWILIO_API_KEY=api_key
+TWILIO_API_SECRET=twilio_api_secret
+TEST_USER=54228d9e-7d71-4942-bbaa-6461d1a9fd29
+
+FIREBASE_PROJECT_ID=real-time-call-management
+FIREBASE_DB_URL=your-firebase-db-url
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----private_key-----END PRIVATE KEY-----\n"
+FIREBASE_CLIENT_EMAIL="firebase-adminsdk-fbsvc@real-time-call-management.iam.gserviceaccount.com"
+
+CLICKHOUSE_URL=http://clickhouse:8123
+CLICKHOUSE_USERNAME=default
+CLICKHOUSE_PASSWORD=default_user_password
+CLICKHOUSE_DATABASE=call_management
+PUBLIC_URL=your_ngrok_public_url_for_backend 
+
+NODE_ENV=development
+PORT=3002
+
+
+GOOGLE_CLOUD_KEY_FILE=key_filename_for_google_cloud_tasks
+GOOGLE_CLOUD_PROJECT_ID=your_project_id
+GOOGLE_CLOUD_QUEUE=call-logs-queue
+GOOGLE_CLOUD_LOCATION=asia-south1
+```
+
+### 3. Firebase Setup
+
+1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+2. Generate a service account key
+3. Add the credentials to your `.env` file
+4. Set up Firebase Realtime Database
+
+### 4. Twilio Setup
+
+1. Sign up at [Twilio Console](https://console.twilio.com/)
+2. Get your Account SID, Auth Token, and phone number
+3. Create a twiMl app (application sid  in env)
+    -request url: https://ngrok_public_url/twilio/voice
+    - statuscallback url: https://ngrok_public_url/twilio/events
+4. Create another twiMl for outgoing call 
+    - request url: https://ngrok_public_url/twilio/voice-outgoing
+
+5. Twilio number configurations:
+    - a call comes in: https://ngrok_public_url/twilio/incoming
+    - call status changes: https://ngrok_public_url/twilio/events-incoming-parent-end
+
+### 5. Google cloud tasks
+   - enable a  google project with cloud tasks and add the key file in backend folder with name call-management.json
+
+### 6. Run with Docker (Recommended)
+
+```bash
+# Start all services
+docker-compose up -d
+
+# View logs  
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+Also start an ngrok server to get a public url for backend and use it for twilio configurations
+
+### 6. Manual Installation (Alternative)
+
+```bash
+# Install backend dependencies
+cd backend
+npm install
+
+# Install frontend dependencies (if needed)
+cd ../frontend  
+# No npm dependencies for vanilla frontend
+
+# Start ClickHouse (requires separate installation)
+# Start backend
+cd ../backend
+npm run start:dev
+
+# Serve frontend (use any web server)
+cd ../frontend
+python -m http.server 8080  # or use nginx
+```
+
+## 🖥️ Usage
+
+### Accessing the Application
+
+- **Frontend:** http://localhost:8080
+- **Backend API:** http://localhost:3002  
+- **API Documentation:** http://localhost:3002/api
+- **ClickHouse UI:** http://localhost:8123
+
+Test user - Jane
+Password  - 123456
+
+### Basic Workflow
+
+1. **Sign Up/Login:** Create an account or login at the main page
+2. **Dashboard:** View your call analytics and real-time data
+3. **Make Calls:** Use the interface to initiate outbound calls
+4. **Monitor Calls:** Watch real-time call status updates
+5. **Manage Data:** View call logs, add notes, and export data
+6. **Analytics:** Analyze call performance and trends
+
+### API Endpoints
+
+#### Authentication
+```http
+POST /auth/signin           # User login
+GET  /auth/validate-token   # Validate JWT token
+```
+
+#### Call Management  
+```http
+GET    /calls              # Get filtered calls
+GET    /calls/analytics    # Get call analytics
+GET    /calls/export       # Export calls to CSV
+GET    /calls/summary      # Get call debug info
+GET    /calls/stream       # Real-time call updates (SSE)
+```
+
+#### Call Operations
+```http
+POST   /twilio/make        # Initiate outbound call
+POST   /twilio/voice       # TwiML response endpoint
+POST   /twilio/events      # Twilio webhook for call events
+```
+
+#### Call Debug Processing
+```http
+POST   /call-debug/process-call-logs  # Process call logs via Cloud Tasks
+```
+
+#### Call Notes
+```http
+GET    /calls/:callSid/notes    # Get call notes  
+PATCH  /calls/:id/notes         # Update call notes
+```
+
+
+
+## 🧪 Testing
+
+This project includes comprehensive testing with Jest and NestJS testing utilities.
+
+### Running Tests
+
+```bash
+# Run unit tests
+npm run test
+
+
+```
+
+### Test Categories
+
+- **Unit Tests:** Individual component and service testing 
+
+
+## 📚 API Documentation
+
+Interactive API documentation is available via Swagger UI:
+
+- **Local:** http://localhost:3002/api
+- **Features:** 
+  - Complete endpoint documentation
+  - Request/response schemas  
+  - Interactive testing interface
+  - Authentication examples
+
+### Example API Usage
+
+```javascript
+// Login
+const loginResponse = await fetch('/auth/signin', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ username: 'user', password: 'pass' })
+});
+const { accessToken } = await loginResponse.json();
+
+// Make a call
+const callResponse = await fetch('/twilio/make', {
+  method: 'POST', 
+  headers: { 
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ to: '+1234567890' })
+});
+
+// Get call analytics
+const analytics = await fetch('/calls/analytics', {
+  headers: { 'Authorization': `Bearer ${accessToken}` }
+});
+```
+
+
+## 🔒 Security Considerations
+
+### Authentication & Authorization
+- **JWT Authentication:** Secure token-based authentication with configurable expiration
+- **Bearer Token:** API endpoints protected with Authorization headers
+- **User Context:** All operations scoped to authenticated users
+
+### Data Protection
+- **Input Validation:** Request validation using class-validator decorators
+- **Environment Variables:** Sensitive data stored securely in .env files
+
+
+
+
+
+

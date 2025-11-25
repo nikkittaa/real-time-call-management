@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Call Details</title>
+  <link rel="stylesheet" href="css/callDebug.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Call Details</h1>
+
+    <div class="tabs">
+      <span class="active">Details</span>
+    </div>
+
+    <h2 class="section-title">Properties</h2>
+
+    <div class="properties">
+      <div class="left-column">
+        <p><strong>Call SID</strong> <span id="callSid"></span></p>
+        <p><strong>Date</strong> <span id="date"></span></p>
+        <p><strong>Start Time</strong> <span id="startTime"></span></p>
+        <p><strong>End Time</strong> <span id="endTime"></span></p>
+        <p><strong>Duration</strong> <span id="duration"></span></p>
+      </div>
+
+      <div class="right-column">
+        <p><strong>From</strong> <a href="#" id="from"></a></p>
+        <p><strong>To</strong> <span id="to"></span></p>
+        <p><strong>Direction</strong> <span id="direction"></span></p>
+        <p><strong>Cost</strong> <span id="price"></span> <span id="priceUnit"></span></p>
+        <p><strong>Status</strong> <span id="status"></span></p>
+      </div>
+    </div>
+
+    <div class="media-section" id = "child-calls">
+      
+    </div>
+
+
+    <div class="media-section">
+      <h2>Media</h2>
+      <p><strong>Recordings:</strong> <span id="recordings">No recordings found</span></p>
+    </div>
+
+    <div class="events-section">
+      <h2>Events / Requests</h2>
+      <div id="events" class="events-box"></div>
+    </div>
+  </div>
+
+  <script type="module" src="js/callDebug/callDebug.js"></script>
+</body>
+</html>

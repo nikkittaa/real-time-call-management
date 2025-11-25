@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Call Logs</title>
+  <link rel="stylesheet" href="css/callLogs.css">
+</head>
+<body>
+<a href="dashboard.html" class="back-link">← Back to Dashboard</a>
+  <div class="dashboard-container">
+    
+    <h1>Your Call Logs</h1>
+    <div id="callLogsContainer"></div>
+
+
+<div class="filters">
+  <label for="fromDate">From Date</label>
+  <input type="date" id="fromDate">
+  <label for="toDate">To Date</label>
+  <input type="date" id="toDate">
+  <input type="text" id="phoneNumber" placeholder="Phone Number (e.g. +123456789)">
+  <input type = "text" id = "notes" placeholder=" Search Notes">
+  
+  <select id="status">
+    <option value="">All Status</option>
+    <option value="completed">Completed</option>
+    <option value="failed">Failed</option>
+    <option value="busy">Busy</option>
+    <option value="no-answer">No Answer</option>
+    <option value="canceled">Canceled</option>
+  </select>
+  <select id="direction">
+    <option value="">All Direction</option>
+    <option value="inbound">Inbound</option>
+    <option value="outbound">Outbound</option>
+  </select>
+  
+  <button id="applyFilters">Apply Filters</button>
+  <button id="clearFilters">Clear</button>
+  <button id="exportCalls">Export Calls</button>
+</div>
+
+    <table id="callLogsTable">
+      <thead>
+        <tr>
+          <th>Call SID</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Status</th>
+          <th>Direction</th>
+          <th>
+            Start Time
+            <button class="sort-btn" id ="start_time">⇅</button>
+          </th>
+    
+          <th>
+            End Time
+            <button class="sort-btn" id ="end_time">⇅</button>
+          </th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="callLogsBody"></tbody>
+    </table>  
+    
+    <div class="pagination">
+      <div>
+      <label>Limit</label>
+  <input type="number" id="limit" value="5">
+</div>
+<div>
+      <button id="prevPage">Previous</button>
+      <span id="pageInfo"></span>
+      <button id="nextPage">Next</button>
+      </div>
+    </div>
+  </div>
+  <script type = "module" src="js/call_logs/callLogs.js"></script>
+</body>
+</html>

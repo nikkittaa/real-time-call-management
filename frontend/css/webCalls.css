@@ -1,0 +1,103 @@
+    .dialer-container {
+    width: 350px;
+    margin: 40px auto;
+    font-family: Arial, sans-serif;
+    text-align: center;
+  }
+  
+   
+  body {
+    background: #f9fafb;
+    color: #1f2937;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    min-height: 100vh;
+  }
+  
+  /* ========== Back Link ========== */
+  .back-link {
+    align-self: flex-start;
+    margin-bottom: 15px;
+    text-decoration: none;
+    font-size: 1rem;
+    color: #2563eb;
+  }
+  
+  
+  .incoming-banner {
+    background: #ffe9c7;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .hidden {
+    display: none;
+  }
+  
+  .incoming-actions {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 10px;
+  }
+  
+  .status {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #444;
+  }
+  
+  .number-pad {
+    margin-top: 20px;
+  }
+  
+  .input-number {
+    width: 90%;
+    padding: 10px;
+    font-size: 18px;
+    border-radius: 8px;
+    border: 1px solid #aaa;
+    margin-bottom: 15px;
+  }
+  
+  .pad-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .pad-btn {
+    padding: 15px;
+    font-size: 20px;
+    border: none;
+    background: #f0f0f0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  
+  .pad-btn:hover {
+    background: #ddd;
+  }
+  
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 5px;
+  }
+  
+  .call { background: #28a745; color: white;}
+  .hangup { background: #dc3545; color: white; }
+  .mute { background: #6c757d; color: white; }
+  .accept { background: #28a745; color: white; }
+  .reject { background: #dc3545; color: white; }
+  .init { background: #007bff; color: white; }
+  .call:disabled { background: #6c757d; color: white; }
+
+  

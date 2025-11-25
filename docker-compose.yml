@@ -1,0 +1,56 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: backend
+    command: npm run start:dev
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    ports:
+      - "3002:3002"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - clickhouse
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+
+    container_name: frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24
+    container_name: clickhouse
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8123:8123" # HTTP / UI
+      - "9000:9000" # Native driver port
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - clickhouse_logs:/var/log/clickhouse-server
+      - ./clickhouse/init:/docker-entrypoint-initdb.d
+    ulimits:
+      nofile: 262144
+    networks:
+      - app-network
+
+volumes:
+  clickhouse_data:
+  clickhouse_logs:
+
+networks:
+  app-network:
+    driver: bridge
