@@ -164,6 +164,8 @@ describe('CallsService', () => {
   describe('exportCalls', () => {
     it('should export calls as CSV', async () => {
       const exportCallDto: ExportCallDto = {
+        limit: 10,
+        page: 1,
         from: new Date('2023-01-01'),
         to: new Date('2023-12-31'),
         status: CallStatus.COMPLETED,

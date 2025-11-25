@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export interface CallLog {
   call_sid: string;
@@ -18,15 +19,22 @@ export interface CallLog {
 
 export class CallLogResponse implements CallLog {
   @ApiProperty({ description: 'Call SID', example: 'CA1234567890' })
+  @IsString()
+  @IsNotEmpty()
   call_sid: string;
 
   @ApiProperty({ description: 'From number', example: '+1234567890' })
+  @IsString()
+  @IsNotEmpty()
   from_number: string;
 
   @ApiProperty({ description: 'To number', example: '+1234567890' })
+  @IsString()
   to_number: string;
 
   @ApiProperty({ description: 'Status', example: 'completed' })
+  @IsString()
+  @IsNotEmpty()
   status: string;
 
   @ApiProperty({ description: 'Duration', example: 100 })
@@ -42,11 +50,14 @@ export class CallLogResponse implements CallLog {
   notes?: string;
 
   @ApiProperty({ description: 'User ID', example: '1234567890' })
+  @IsString()
+  @IsNotEmpty()
   user_id?: string;
 
   @ApiProperty({ description: 'Created at', example: '2025-01-01T10:00:00Z' })
   created_at?: Date | string | null;
 
   @ApiProperty({ description: 'Direction', example: 'outbound-api' })
+  @IsString()
   direction?: string;
 }

@@ -196,6 +196,8 @@ describe('CallController', () => {
   describe('exportCalls', () => {
     it('should export calls as StreamableFile', async () => {
       const exportCallDto: ExportCallDto = {
+        limit: 10,
+        page: 1,
         from: new Date('2025-01-01'),
         to: new Date('2025-12-31'),
         status: CallStatus.COMPLETED,
@@ -215,6 +217,8 @@ describe('CallController', () => {
 
     it('should handle empty export data', async () => {
       const exportCallDto: ExportCallDto = {
+        limit: 10,
+        page: 1,
         from: new Date('2025-01-01'),
         to: new Date('2025-01-01'),
       };
@@ -278,7 +282,6 @@ describe('CallController', () => {
 
       jwtService.verify.mockReturnValue(mockJwtPayload);
       firebaseService.listen.mockImplementation((path, callback) => {
-        // Simulate Firebase callback
         setTimeout(() => {
           callback(
             { key: 'CA123456', val: () => ({ status: 'completed' }) } as any,
